@@ -1,0 +1,31 @@
+[ru]
+HNS_CHAT_PREFIX = [HNS]
+HNS_START_TITLE = Игра начнётся через %d секунд(ы)!
+HNS_END_TITLE = Полетели!
+
+HNS_FALLDOWN_TEXT = Урон %i
+
+HNS_HIDERS_WIN = Прячущиеся выиграли!
+HNS_SEEKERS_WIN = Ищущие выиграли, меняем команды местами!
+
+HNS_COUNTDOWN_ON = Чтобы включить звук отсёта, напишите в чате /cdon
+HNS_COUNTDOWN_OFF = Чтобы отключить звук отсёта, напишите в чате /cdoff
+
+HNS_AF_FROZEN_TRUE = Ты заморожен на %d секунд(ы).
+HNS_AF_FROZEN_FALSE = Ты разморожен! Скорее догоняй %s.
+
+HNS_AF_SPEED_TRUE = Твоя скорость снижена на %d секунд(ы).
+HNS_AF_SPEED_FALSE = Тебе возвращена нормальная скорость! Скорее догоняй %s.
+
+[en]
+HNS_CHAT_PREFIX = [HNS]
+HNS_START_TITLE = The game will begin in %d seconds!
+HNS_END_TITLE = Go Go Go!
+
+HNS_FALLDOWN_TEXT = Demage %i
+
+HNS_HIDERS_WIN = Hiders WIN!
+HNS_SEEKERS_WIN = Seekers WIN! Changes command places!
+To turn the sound reference, write in chat
+HNS_COUNTDOWN_ON = To turn the sound reference, write in chat /cdon
+HNS_COUNTDOWN_OFF = To mute the sound reference, write in chat /cdoff
