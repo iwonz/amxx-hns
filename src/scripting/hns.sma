@@ -1,4 +1,3 @@
-// Проверить g_aCountdownSound что играет и g_aIsAfkTeam
 // Проверить антифлеш кт во время отсчёта
 
 #include <amxmodx>
@@ -38,7 +37,7 @@ new g_iFlasherTeam;
 new bool:g_bFlashFailed;
 new bool:g_bFlashbangEntity[MAX_TRACKED_ENTITIES];
 
-new bool:g_aCountdownSound[33] = true;
+new bool:g_aCountdownSound[33];
 new g_aIsAfkTeam[33] = 0;
 
 new g_iTimer = 0;
@@ -244,6 +243,7 @@ public plugin_cfg() {
 
 public client_connect(id) {
 	g_bConnected[id] = true;
+	g_aCountdownSound[id] = true;
 	g_aIsAfkTeam[id] = 0;
 }
 
@@ -251,6 +251,7 @@ public client_disconnect(id) {
 	fnRemovePlayerTasks(id);
 
 	g_bConnected[id] = false;
+	g_aCountdownSound[id] = false;
 	g_aIsAfkTeam[id] = 0;
 }
 
@@ -552,19 +553,14 @@ public fnSwapTeams() {
 
 		new iUserTeam = get_user_team(aPlayers[i]);
 
+		switch(g_aIsAfkTeam[aPlayers[i]]) {
+			case 1: g_aIsAfkTeam[aPlayers[i]] = 2;
+			case 2: g_aIsAfkTeam[aPlayers[i]] = 1;
+		}
+
 		switch(iUserTeam) {
-			case 1: {
-				if(g_aIsAfkTeam[aPlayers[i]] != 0)
-					g_aIsAfkTeam[aPlayers[i]] = 2;
-
-				cs_set_user_team(aPlayers[i], 2);
-			}
-			case 2: {
-				if(g_aIsAfkTeam[aPlayers[i]] != 0)
-					g_aIsAfkTeam[aPlayers[i]] = 1;
-
-				cs_set_user_team(aPlayers[i], 1);
-			}
+			case 1: cs_set_user_team(aPlayers[i], 2);
+			case 2: cs_set_user_team(aPlayers[i], 1);
 		}
 	}
 }

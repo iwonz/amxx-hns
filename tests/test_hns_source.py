@@ -191,6 +191,23 @@ class HnsSourceRegressionTests(unittest.TestCase):
       self.assertNotIn(stale_text, CONFIG)
       self.assertNotIn(stale_text, LANG)
 
+  def test_countdown_sound_preference_is_initialized_per_connection(self):
+    self.assertIn("new bool:g_aCountdownSound[33];", SOURCE)
+    self.assertIn("g_aCountdownSound[id] = true;", function_body("client_connect"))
+    self.assertIn("g_aCountdownSound[id] = false;", function_body("client_disconnect"))
+
+  def test_afk_saved_team_follows_role_swaps(self):
+    body = function_body("fnSwapTeams")
+    saved_team_swap = "switch(g_aIsAfkTeam[aPlayers[i]])"
+    active_team_swap = "switch(iUserTeam)"
+
+    self.assertIn(saved_team_swap, body)
+    self.assertIn("case 1: g_aIsAfkTeam[aPlayers[i]] = 2;", body)
+    self.assertIn("case 2: g_aIsAfkTeam[aPlayers[i]] = 1;", body)
+    self.assertLess(body.index(saved_team_swap), body.index(active_team_swap))
+    self.assertNotIn("if(g_aIsAfkTeam[aPlayers[i]] != 0)", body)
+    self.assertNotIn("Проверить g_aCountdownSound", SOURCE)
+
   def test_alive_checks_use_engine_state_instead_of_cached_flags(self):
     self.assertNotIn("g_bAlive", SOURCE)
     self.assertIn("if(is_user_alive(id))", function_body("fnSayAfk"))
