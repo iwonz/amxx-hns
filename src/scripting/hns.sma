@@ -1,5 +1,3 @@
-// Проверить антифлеш кт во время отсчёта
-
 #include <amxmodx>
 #include <fakemeta>
 #include <hamsandwich>

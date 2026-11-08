@@ -208,6 +208,19 @@ class HnsSourceRegressionTests(unittest.TestCase):
     self.assertNotIn("if(g_aIsAfkTeam[aPlayers[i]] != 0)", body)
     self.assertNotIn("Проверить g_aCountdownSound", SOURCE)
 
+  def test_countdown_antiflash_only_blocks_flash_fades_for_seekers(self):
+    body = function_body("msgScreenFade")
+    flash_guard = "if(!fnIsFlashScreenFade()"
+    countdown_guard = (
+      "if(g_iTimer && get_pcvar_num(g_aCvar[CVAR_TIMER_ANTIFLASH_CT]) == 1 "
+      "&& get_user_team(msgEnt) == 2)"
+    )
+
+    self.assertIn(flash_guard, body)
+    self.assertIn(countdown_guard, body)
+    self.assertLess(body.index(flash_guard), body.index(countdown_guard))
+    self.assertNotIn("Проверить антифлеш кт", SOURCE)
+
   def test_alive_checks_use_engine_state_instead_of_cached_flags(self):
     self.assertNotIn("g_bAlive", SOURCE)
     self.assertIn("if(is_user_alive(id))", function_body("fnSayAfk"))
