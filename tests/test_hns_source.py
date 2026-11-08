@@ -97,6 +97,13 @@ class HnsSourceRegressionTests(unittest.TestCase):
     self.assertNotIn("random_num", fade_body)
     self.assertIn("random_num", function_body("fnPrepareFlashbang"))
 
+  def test_alive_checks_use_engine_state_instead_of_cached_flags(self):
+    self.assertNotIn("g_bAlive", SOURCE)
+    self.assertIn("if(is_user_alive(id))", function_body("fnSayAfk"))
+    self.assertIn("if(!is_user_alive(id))", function_body("fwdCmdStart"))
+    self.assertIn("!is_user_alive(msgEnt)", function_body("msgScreenFade"))
+    self.assertIn("is_user_alive(aPlayers[i])", function_body("fnTRAlive"))
+
 
 if __name__ == "__main__":
   unittest.main()

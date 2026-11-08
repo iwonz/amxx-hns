@@ -3,7 +3,6 @@
 // Стандартные модельки
 // Кастомные звуки на победу
 // Сообщения о командах в чате
-// проверить g_bAlive когда /afk пишет
 // Проверить g_aCountdownSound что играет и g_aIsAfkTeam
 // Проверить антифлеш кт во время отсчёта
 
@@ -32,7 +31,6 @@ new const FLASHBANG_MODEL[] = "models/w_flashbang.mdl";
 new bool:g_bStart = false;
 new bool:g_bCountdownActive = false;
 
-new bool:g_bAlive[33];
 new bool:g_bConnected[33];
 
 new g_SyncHud;
@@ -241,7 +239,6 @@ public client_disconnect(id) {
 	fnRemovePlayerTasks(id);
 
 	g_bConnected[id] = false;
-	g_bAlive[id] = false;
 	g_aIsAfkTeam[id] = 0;
 }
 
@@ -259,7 +256,7 @@ public fnSayAfk(id) {
 		return PLUGIN_HANDLED;
 	}
 
-	if(g_bAlive[id])
+	if(is_user_alive(id))
 		fnUserSilentKill(id);
 
 	cs_set_user_team(id, 3);
@@ -333,8 +330,6 @@ public fnToggleCountdownSound(id) {
 public fnDeath() {
 	// new iKiller = read_data(1);
 	new iVictim = read_data(2);
-
-	g_bAlive[iVictim] = false;
 
 	if(
 		get_pcvar_num(g_aCvar[CVAR_TIMER_IMMORTAL]) == 1 &&
@@ -765,8 +760,6 @@ public fnAutoHeal(aArgs[], iTaskId) {
 
 public fnPlayerSpawnAfter(id) {
 	if(is_user_alive(id)) {
-		g_bAlive[id] = true;
-
 		remove_task(TASK_GIVE_WEAPONS + id);
 		set_task(0.1, "taskGiveWeapons", TASK_GIVE_WEAPONS + id);
 	}
@@ -786,7 +779,7 @@ public fwdEmitSound(id, channel, const szSound[]) {
 }
 
 public fwdCmdStart(id, handle) {
-	if(!g_bAlive[id])
+	if(!is_user_alive(id))
 		return 1;
 
 	static weapon;
@@ -921,7 +914,7 @@ public msgStatusIcon(msgid, msgdest, id) {
 }
 
 public msgScreenFade(msgId, msgDest, msgEnt) {
-	if(!fnIsFlashScreenFade() || !g_iFlasherTeam || !g_bAlive[msgEnt])
+	if(!fnIsFlashScreenFade() || !g_iFlasherTeam || !is_user_alive(msgEnt))
 		return PLUGIN_CONTINUE;
 
 	if(g_bFlashFailed)
@@ -1016,7 +1009,7 @@ bool:fnTRAlive() {
 	get_players(aPlayers, iPlayersCount, "ch");
 
 	for(i = 0; i < iPlayersCount; i++)
-		if(g_bAlive[aPlayers[i]] && get_user_team(aPlayers[i]) == 1)
+		if(is_user_alive(aPlayers[i]) && get_user_team(aPlayers[i]) == 1)
 			return true;
 
 	return false;
