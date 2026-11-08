@@ -113,6 +113,20 @@ class HnsSourceRegressionTests(unittest.TestCase):
     self.assertIn("return FMRES_HANDLED;", body)
     self.assertIn("return FMRES_IGNORED;", body)
 
+  def test_team_change_cvar_and_immunity_have_independent_semantics(self):
+    self.assertIn("return fnHandleTeamChange(id);", function_body("fnChooseTeam"))
+    self.assertIn("return fnHandleTeamChange(id);", function_body("fnJoinTeam"))
+
+    body = function_body("fnHandleTeamChange")
+    global_allow = "if(get_pcvar_num(g_aCvar[CVAR_CHANGE_TEAM]) == 1)"
+    immunity_check = "if(get_pcvar_num(g_aCvar[CVAR_CHANGE_TEAM_IMMUNITY]) == 1)"
+
+    self.assertIn(global_allow, body)
+    self.assertIn(immunity_check, body)
+    self.assertLess(body.index(global_allow), body.index(immunity_check))
+    self.assertIn("return PLUGIN_CONTINUE;", body)
+    self.assertIn("return PLUGIN_HANDLED;", body)
+
 
 if __name__ == "__main__":
   unittest.main()

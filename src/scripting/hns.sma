@@ -931,51 +931,36 @@ bool:fnIsFlashScreenFade() {
 }
 
 public fnChooseTeam(id) {
-	if(get_user_team(id) == 3) {
-		if(!g_aIsAfkTeam[id])
-			return 0;
-		else {
-			ChatColor(id, "%s Чтобы ^4вернуться в игру^1, напишите ^4/play ^1или ^4/back ^1в чате!", CHAT_PREFIX);
-			return 1;
-		}
-	}
-
-	if(get_pcvar_num(g_aCvar[CVAR_CHANGE_TEAM]) == 1) {
-		if(get_pcvar_num(g_aCvar[CVAR_CHANGE_TEAM_IMMUNITY]) == 1) {
-			new szImmunityFlag[2];
-			get_pcvar_string(g_aCvar[CVAR_CHANGE_TEAM_IMMUNITY_FLAG], szImmunityFlag, 1);
-			new iImmunityFlag = read_flags(szImmunityFlag);
-
-			if(get_user_flags(id) & iImmunityFlag)
-				return 0;
-		}
-	}
-
-	return 1;
+	return fnHandleTeamChange(id);
 }
 
 public fnJoinTeam(id) {
+	return fnHandleTeamChange(id);
+}
+
+fnHandleTeamChange(id) {
 	if(get_user_team(id) == 3) {
 		if(!g_aIsAfkTeam[id])
-			return 0;
+			return PLUGIN_CONTINUE;
 		else {
 			ChatColor(id, "%s Чтобы ^4вернуться в игру^1, напишите ^4/play ^1или ^4/back ^1в чате!", CHAT_PREFIX);
-			return 1;
+			return PLUGIN_HANDLED;
 		}
 	}
 
-	if(get_pcvar_num(g_aCvar[CVAR_CHANGE_TEAM]) == 1) {
-		if(get_pcvar_num(g_aCvar[CVAR_CHANGE_TEAM_IMMUNITY]) == 1) {
-			new szImmunityFlag[2];
-			get_pcvar_string(g_aCvar[CVAR_CHANGE_TEAM_IMMUNITY_FLAG], szImmunityFlag, 1);
-			new iImmunityFlag = read_flags(szImmunityFlag);
+	if(get_pcvar_num(g_aCvar[CVAR_CHANGE_TEAM]) == 1)
+		return PLUGIN_CONTINUE;
 
-			if(get_user_flags(id) & iImmunityFlag)
-				return 0;
-		}
+	if(get_pcvar_num(g_aCvar[CVAR_CHANGE_TEAM_IMMUNITY]) == 1) {
+		new szImmunityFlag[2];
+		get_pcvar_string(g_aCvar[CVAR_CHANGE_TEAM_IMMUNITY_FLAG], szImmunityFlag, 1);
+		new iImmunityFlag = read_flags(szImmunityFlag);
+
+		if(get_user_flags(id) & iImmunityFlag)
+			return PLUGIN_CONTINUE;
 	}
 
-	return 1;
+	return PLUGIN_HANDLED;
 }
 
 public fnGetPlayers(&tr, &ct) {
