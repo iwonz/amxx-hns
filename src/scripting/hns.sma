@@ -27,6 +27,7 @@
 #define TASK_GIVE_WEAPONS 1400
 
 new bool:g_bStart = false;
+new bool:g_bCountdownActive = false;
 
 new bool:g_bAlive[33];
 new bool:g_bConnected[33];
@@ -298,7 +299,13 @@ bool:fnIsPlayableTeam(iTeam) {
 public fnAfkControlRevive(iTaskID) {
 	new id = iTaskID - TASK_AFK_REVIVE;
 
-	if(g_bConnected[id] && !is_user_alive(id) && fnIsPlayableTeam(get_user_team(id)))
+	if(
+		g_bConnected[id] &&
+		g_bStart &&
+		g_iTimer > 0 &&
+		!is_user_alive(id) &&
+		fnIsPlayableTeam(get_user_team(id))
+	)
 		ExecuteHamB(Ham_CS_RoundRespawn, id);
 }
 
@@ -326,7 +333,8 @@ public fnDeath() {
 
 	if(
 		get_pcvar_num(g_aCvar[CVAR_TIMER_IMMORTAL]) == 1 &&
-		g_iTimer
+		g_bStart &&
+		g_iTimer > 0
 	) {
 		new Float:fReviveDelay;
 		fReviveDelay = get_pcvar_float(g_aCvar[CVAR_TIMER_IMMORTAL_DELAY]);
@@ -346,6 +354,8 @@ public fnRevive(iTaskID) {
 
 	if(
 		g_bConnected[iUserID] &&
+		g_bStart &&
+		g_iTimer > 0 &&
 		!is_user_alive(iUserID) &&
 		fnIsPlayableTeam(iUserTeam)
 	) {
@@ -458,6 +468,8 @@ stock fnJinTeam(id, menu_msgid, /* const */ team[] = "5", /* const */ class[] = 
 // END OF ROUND
 
 public fnRoundEnd() {
+	fnStopCountdown();
+
 	for(new i = 1; i <= 32; i++)
 		fnRemoveRoundTasks(i);
 
@@ -537,30 +549,40 @@ public fnTakeKnife(id) {
 public fnRoundBeforeFreezeTime() {
 	new iTR, iCT;
 
+	fnStopCountdown();
 	fnGetPlayers(iTR, iCT);
 
-	if(iTR && iCT)
-		g_bStart = true;
+	g_bStart = iTR > 0 && iCT > 0;
 
 	g_iFlasher = g_iFlasherTeam = 0;
 }
 
 public fnRoundAfterFreezeTime() {
 	if(g_bStart) {
-		g_iTimer = get_pcvar_num(g_aCvar[CVAR_TIMER]);
+		g_iTimer = clamp(get_pcvar_num(g_aCvar[CVAR_TIMER]), 1, 10);
+		g_bCountdownActive = true;
 		set_pev(g_TimerEntity, pev_nextthink, get_gametime());
 	}
 }
 
-public fwdThink(ent)
-	if(ent == g_TimerEntity)
-		fnTimer(ent);
+public fwdThink(ent) {
+	if(ent != g_TimerEntity)
+		return FMRES_IGNORED;
+
+	if(!g_bStart) {
+		fnStopCountdown();
+		return FMRES_IGNORED;
+	}
+
+	fnTimer(ent);
+	return FMRES_IGNORED;
+}
 
 public fnTimer(ent) {
 	new aPlayers[32], iPlayersCount, i;
 	get_players(aPlayers, iPlayersCount, "ch");
 
-	if(g_iTimer) {
+	if(g_iTimer > 0) {
 		for(i = 0; i < iPlayersCount; i++) {
 			if(g_bConnected[aPlayers[i]] && !is_user_bot(aPlayers[i]) && !is_user_hltv(aPlayers[i])) {
 				if(get_user_team(aPlayers[i]) == 2) {
@@ -589,16 +611,38 @@ public fnTimer(ent) {
 
 		g_iTimer--;
 		set_pev(ent, pev_nextthink, get_gametime() + 1.0);
-	} else {
-		for(i = 0; i < iPlayersCount; i++) {
-			ClearDHUDMessages(aPlayers[i]);
+	} else
+		fnEndCountdown(true);
+}
+
+fnStopCountdown() {
+	if(!g_bCountdownActive) {
+		set_pev(g_TimerEntity, pev_nextthink, 0.0);
+		return;
+	}
+
+	fnEndCountdown(false);
+}
+
+fnEndCountdown(bool:bShowStartMessage) {
+	g_iTimer = 0;
+	g_bCountdownActive = false;
+	set_pev(g_TimerEntity, pev_nextthink, 0.0);
+
+	new aPlayers[32], iPlayersCount;
+	get_players(aPlayers, iPlayersCount, "ch");
+
+	for(new i = 0; i < iPlayersCount; i++) {
+		ClearDHUDMessages(aPlayers[i]);
+
+		if(bShowStartMessage) {
 			set_dhudmessage(random_num(0, 255), random_num(0, 255), random_num(0, 255), -1.0, -0.65, 0, 0.0, 5.0, 0.1, 1.0);
 			show_dhudmessage(aPlayers[i], "Понеслась!!!");
+		}
 
-			if(get_user_team(aPlayers[i]) == 2) {
-				set_pev(aPlayers[i], pev_flags, pev(aPlayers[i], pev_flags) & ~FL_FROZEN);
-				fnMakeScreenFade(aPlayers[i], 0, 0, 0, 255, 0);
-			}
+		if(get_user_team(aPlayers[i]) == 2) {
+			set_pev(aPlayers[i], pev_flags, pev(aPlayers[i], pev_flags) & ~FL_FROZEN);
+			fnMakeScreenFade(aPlayers[i], 0, 0, 0, 255, 0);
 		}
 	}
 }
