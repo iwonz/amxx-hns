@@ -176,6 +176,21 @@ class HnsSourceRegressionTests(unittest.TestCase):
     self.assertIn('client_cmd(0, "spk %s", szSound);', play_body)
     self.assertNotIn("Кастомные звуки на победу", SOURCE)
 
+  def test_stale_countdown_command_notices_are_removed(self):
+    for stale_text in (
+      "Сообщения о командах в чате",
+      "TODO: СДЕЛАТЬ",
+      "cd_on",
+      "cd_time",
+      "/cdon",
+      "/cdoff",
+      "HNS_COUNTDOWN_ON",
+      "HNS_COUNTDOWN_OFF",
+    ):
+      self.assertNotIn(stale_text, SOURCE)
+      self.assertNotIn(stale_text, CONFIG)
+      self.assertNotIn(stale_text, LANG)
+
   def test_alive_checks_use_engine_state_instead_of_cached_flags(self):
     self.assertNotIn("g_bAlive", SOURCE)
     self.assertIn("if(is_user_alive(id))", function_body("fnSayAfk"))

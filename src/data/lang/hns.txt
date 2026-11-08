@@ -8,9 +8,6 @@ HNS_FALLDOWN_TEXT = Урон %i
 HNS_HIDERS_WIN = Прячущиеся выиграли!
 HNS_SEEKERS_WIN = Ищущие выиграли, меняем команды местами!
 
-HNS_COUNTDOWN_ON = Чтобы включить звук отсёта, напишите в чате /cdon
-HNS_COUNTDOWN_OFF = Чтобы отключить звук отсёта, напишите в чате /cdoff
-
 [en]
 HNS_CHAT_PREFIX = [HNS]
 HNS_START_TITLE = The game will begin in %d seconds!
@@ -20,6 +17,3 @@ HNS_FALLDOWN_TEXT = Demage %i
 
 HNS_HIDERS_WIN = Hiders WIN!
 HNS_SEEKERS_WIN = Seekers WIN! Changes command places!
-To turn the sound reference, write in chat
-HNS_COUNTDOWN_ON = To turn the sound reference, write in chat /cdon
-HNS_COUNTDOWN_OFF = To mute the sound reference, write in chat /cdoff
