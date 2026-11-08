@@ -20,8 +20,11 @@
 
 #define CHAT_PREFIX "^4[^1HNS by foxmits^4]^1"
 
-#define AUTOHEAL_TASKID 2604171756
-#define REVIVE_TASKID 2604172001
+#define TASK_AUTOHEAL 1000
+#define TASK_REVIVE 1100
+#define TASK_AFK_REVIVE 1200
+#define TASK_FORCE_JOIN 1300
+#define TASK_GIVE_WEAPONS 1400
 
 new bool:g_bStart = false;
 
@@ -229,6 +232,8 @@ public client_connect(id) {
 }
 
 public client_disconnect(id) {
+	fnRemovePlayerTasks(id);
+
 	g_bConnected[id] = false;
 	g_bAlive[id] = false;
 	g_aIsAfkTeam[id] = 0;
@@ -274,8 +279,10 @@ public fnSayPlay(id) {
 
 	cs_set_user_team(id, g_aIsAfkTeam[id]);
 
-	if(get_pcvar_num(g_aCvar[CVAR_AFK_CONTROL_TIMER_REVIVE]) == 1 && g_iTimer)
-		set_task(0.2, "fnAfkControlRevive", id);
+	if(get_pcvar_num(g_aCvar[CVAR_AFK_CONTROL_TIMER_REVIVE]) == 1 && g_iTimer) {
+		remove_task(TASK_AFK_REVIVE + id);
+		set_task(0.2, "fnAfkControlRevive", TASK_AFK_REVIVE + id);
+	}
 
 	ChatColor(id, "%s Вы успешно ^4вернулись в игру^1!", CHAT_PREFIX);
 
@@ -288,8 +295,12 @@ bool:fnIsPlayableTeam(iTeam) {
 	return iTeam == 1 || iTeam == 2;
 }
 
-public fnAfkControlRevive(id)
-	ExecuteHamB(Ham_CS_RoundRespawn, id);
+public fnAfkControlRevive(iTaskID) {
+	new id = iTaskID - TASK_AFK_REVIVE;
+
+	if(g_bConnected[id] && !is_user_alive(id) && fnIsPlayableTeam(get_user_team(id)))
+		ExecuteHamB(Ham_CS_RoundRespawn, id);
+}
 
 public fnToggleCountdownSound(id) {
 	if(get_pcvar_num(g_aCvar[CVAR_CD_SOUND]) == 0) {
@@ -320,7 +331,7 @@ public fnDeath() {
 		new Float:fReviveDelay;
 		fReviveDelay = get_pcvar_float(g_aCvar[CVAR_TIMER_IMMORTAL_DELAY]);
 
-		new iReviveTaskID = REVIVE_TASKID + iVictim;
+		new iReviveTaskID = TASK_REVIVE + iVictim;
 
 		if(task_exists(iReviveTaskID))
 			remove_task(iReviveTaskID);
@@ -330,12 +341,13 @@ public fnDeath() {
 }
 
 public fnRevive(iTaskID) {
-	new iUserID = iTaskID - REVIVE_TASKID;
+	new iUserID = iTaskID - TASK_REVIVE;
 	new iUserTeam = get_user_team(iUserID);
 
 	if(
-		!g_bAlive[iUserID] &&
-		(iUserTeam == 1 || iUserTeam == 2)
+		g_bConnected[iUserID] &&
+		!is_user_alive(iUserID) &&
+		fnIsPlayableTeam(iUserTeam)
 	) {
 		ExecuteHamB(Ham_CS_RoundRespawn, iUserID);
 	}
@@ -404,7 +416,7 @@ bool:fnBeAutojoin(id) {
 	return (
 		get_pcvar_num(g_aCvar[CVAR_AUTOJOIN]) == 1 &&
 		!get_user_team(id) &&
-		!task_exists(id) &&
+		!task_exists(TASK_FORCE_JOIN + id) &&
 		(get_pcvar_num(g_aCvar[CVAR_AUTOJOIN_IMMUNITY]) == 0 || !(get_user_flags(id) & iImmunityFlag))
 	);
 }
@@ -412,11 +424,14 @@ bool:fnBeAutojoin(id) {
 fnForceTeamJoinTask(id, menu_msgid) {
 	static param_menu_msgid[2];
 	param_menu_msgid[0] = menu_msgid;
-	set_task(0.1, "fnForceTeamJoin", id, param_menu_msgid, sizeof param_menu_msgid);
+	remove_task(TASK_FORCE_JOIN + id);
+	set_task(0.1, "fnForceTeamJoin", TASK_FORCE_JOIN + id, param_menu_msgid, sizeof param_menu_msgid);
 }
 
-public fnForceTeamJoin(menu_msgid[], id) {
-	if(get_user_team(id))
+public fnForceTeamJoin(menu_msgid[], iTaskID) {
+	new id = iTaskID - TASK_FORCE_JOIN;
+
+	if(!g_bConnected[id] || get_user_team(id))
 		return;
 
 	fnJinTeam(id, menu_msgid[0], "5", "5");
@@ -443,16 +458,8 @@ stock fnJinTeam(id, menu_msgid, /* const */ team[] = "5", /* const */ class[] = 
 // END OF ROUND
 
 public fnRoundEnd() {
-	new aPlayers[32], iPlayersCount, i;
-	get_players(aPlayers, iPlayersCount, "ch");
-
-	for(i = 0; i < iPlayersCount; i++) {
-		if(task_exists(AUTOHEAL_TASKID + i))
-			remove_task(AUTOHEAL_TASKID + i);
-
-		if(task_exists(REVIVE_TASKID + i))
-			remove_task(REVIVE_TASKID + i);
-	}
+	for(new i = 1; i <= 32; i++)
+		fnRemoveRoundTasks(i);
 
 	if(!g_bStart)
 		return 0;
@@ -477,6 +484,18 @@ public fnRoundEnd() {
 
 	g_bStart = false;
 	return 0;
+}
+
+fnRemoveRoundTasks(id) {
+	remove_task(TASK_AUTOHEAL + id);
+	remove_task(TASK_REVIVE + id);
+	remove_task(TASK_AFK_REVIVE + id);
+	remove_task(TASK_GIVE_WEAPONS + id);
+}
+
+fnRemovePlayerTasks(id) {
+	fnRemoveRoundTasks(id);
+	remove_task(TASK_FORCE_JOIN + id);
 }
 
 public fnSwapTeams() {
@@ -616,7 +635,7 @@ public fnTakeDamage(iVictim, iInflictor, iAttacker, float:fDamage, bitsDamageTyp
 			new iAutohealMode = get_pcvar_num(g_aCvar[CVAR_AUTOHEAL_MODE]);
 
 			if(iAutohealMode == 3 || iAutohealMode == get_user_team(iVictim)) {
-				new iAutohealTaskId = AUTOHEAL_TASKID + iVictim;
+				new iAutohealTaskId = TASK_AUTOHEAL + iVictim;
 				new Float:fAutoHealDelay;
 
 				fAutoHealDelay = get_pcvar_float(g_aCvar[CVAR_AUTOHEAL_DELAY])
@@ -636,9 +655,9 @@ public fnTakeDamage(iVictim, iInflictor, iAttacker, float:fDamage, bitsDamageTyp
 }
 
 public fnAutoHeal(aArgs[], iTaskId) {
-	new iUserId = iTaskId - AUTOHEAL_TASKID;
+	new iUserId = iTaskId - TASK_AUTOHEAL;
 
-	if(g_bAlive[iUserId]) {
+	if(g_bConnected[iUserId] && is_user_alive(iUserId)) {
 		new iMaxAutohealHP = get_pcvar_num(g_aCvar[CVAR_AUTOHEAL_MAX_HP]);
 		new iDamage = aArgs[0];
 
@@ -655,7 +674,8 @@ public fnPlayerSpawnAfter(id) {
 	if(is_user_alive(id)) {
 		g_bAlive[id] = true;
 
-		set_task(0.1, "taskGiveWeapons", id);
+		remove_task(TASK_GIVE_WEAPONS + id);
+		set_task(0.1, "taskGiveWeapons", TASK_GIVE_WEAPONS + id);
 	}
 }
 
@@ -705,7 +725,12 @@ public fwdCmdStart(id, handle) {
 	return 1;
 }
 
-public taskGiveWeapons(id) {
+public taskGiveWeapons(iTaskID) {
+	new id = iTaskID - TASK_GIVE_WEAPONS;
+
+	if(!g_bConnected[id] || !is_user_alive(id))
+		return;
+
 	new cvarHegrenadeMode = get_pcvar_num(g_aCvar[CVAR_HEGRENADE_MODE]);
 
 	new cvarFlashbangMode = get_pcvar_num(g_aCvar[CVAR_FLASHBANG_MODE]);

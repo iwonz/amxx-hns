@@ -36,6 +36,31 @@ class HnsSourceRegressionTests(unittest.TestCase):
     self.assertIn(guard, body)
     self.assertLess(body.index(guard), body.index(team_change))
 
+  def test_player_tasks_have_namespaces_and_lifecycle_cleanup(self):
+    expected_task_bases = (
+      "TASK_AUTOHEAL",
+      "TASK_REVIVE",
+      "TASK_AFK_REVIVE",
+      "TASK_FORCE_JOIN",
+      "TASK_GIVE_WEAPONS",
+    )
+
+    for task_base in expected_task_bases:
+      self.assertRegex(SOURCE, rf"#define {task_base} \d+")
+
+    self.assertNotIn("AUTOHEAL_TASKID", SOURCE)
+    self.assertNotIn("REVIVE_TASKID", SOURCE)
+    self.assertIn("fnRemovePlayerTasks(id);", function_body("client_disconnect"))
+    self.assertIn("fnRemoveRoundTasks(i);", function_body("fnRoundEnd"))
+    self.assertIn(
+      'set_task(0.1, "taskGiveWeapons", TASK_GIVE_WEAPONS + id);',
+      function_body("fnPlayerSpawnAfter"),
+    )
+    self.assertIn(
+      'set_task(0.2, "fnAfkControlRevive", TASK_AFK_REVIVE + id);',
+      function_body("fnSayPlay"),
+    )
+
 
 if __name__ == "__main__":
   unittest.main()
