@@ -25,6 +25,9 @@
 #define TASK_AFK_REVIVE 1200
 #define TASK_FORCE_JOIN 1300
 #define TASK_GIVE_WEAPONS 1400
+#define MAX_TRACKED_ENTITIES 2049
+
+new const FLASHBANG_MODEL[] = "models/w_flashbang.mdl";
 
 new bool:g_bStart = false;
 new bool:g_bCountdownActive = false;
@@ -36,6 +39,8 @@ new g_SyncHud;
 
 new g_iFlasher;
 new g_iFlasherTeam;
+new bool:g_bFlashFailed;
+new bool:g_bFlashbangEntity[MAX_TRACKED_ENTITIES];
 
 new bool:g_aCountdownSound[33] = true;
 new g_aIsAfkTeam[33] = 0;
@@ -191,7 +196,6 @@ public plugin_init() {
 	register_message(get_user_msgid("StatusIcon"), "msgStatusIcon");
 
 	register_message(get_user_msgid("ScreenFade"), "msgScreenFade");
-	register_message(get_user_msgid("SendAudio"), "msgSendAudio");
 
 	register_message(get_user_msgid("ShowMenu"), "msgShowMenu");
 	register_message(get_user_msgid("VGUIMenu"), "msgVguiMenu");
@@ -200,6 +204,7 @@ public plugin_init() {
 
 	// FORWARDS
 	register_forward(FM_Think, "fwdThink");
+	register_forward(FM_SetModel, "fwdSetModel");
 	register_forward(FM_CmdStart, "fwdCmdStart");
 	register_forward(FM_EmitSound, "fwdEmitSound");
 
@@ -555,6 +560,7 @@ public fnRoundBeforeFreezeTime() {
 	g_bStart = iTR > 0 && iCT > 0;
 
 	g_iFlasher = g_iFlasherTeam = 0;
+	g_bFlashFailed = false;
 }
 
 public fnRoundAfterFreezeTime() {
@@ -565,17 +571,60 @@ public fnRoundAfterFreezeTime() {
 	}
 }
 
-public fwdThink(ent) {
-	if(ent != g_TimerEntity)
-		return FMRES_IGNORED;
+public fwdSetModel(ent, const szModel[]) {
+	if(ent > 0 && ent < sizeof g_bFlashbangEntity)
+		g_bFlashbangEntity[ent] = equal(szModel, FLASHBANG_MODEL) != 0;
 
-	if(!g_bStart) {
-		fnStopCountdown();
+	return FMRES_IGNORED;
+}
+
+public fwdThink(ent) {
+	if(ent == g_TimerEntity) {
+		if(!g_bStart) {
+			fnStopCountdown();
+			return FMRES_IGNORED;
+		}
+
+		fnTimer(ent);
 		return FMRES_IGNORED;
 	}
 
-	fnTimer(ent);
+	if(fnIsFlashbangDetonating(ent))
+		fnPrepareFlashbang(ent);
+
 	return FMRES_IGNORED;
+}
+
+bool:fnIsFlashbangDetonating(ent) {
+	if(
+		ent <= 0 ||
+		ent >= sizeof g_bFlashbangEntity ||
+		!g_bFlashbangEntity[ent] ||
+		!pev_valid(ent)
+	)
+		return false;
+
+	new Float:fDamageTime;
+	pev(ent, pev_dmgtime, fDamageTime);
+
+	return fDamageTime <= get_gametime();
+}
+
+fnPrepareFlashbang(ent) {
+	g_bFlashbangEntity[ent] = false;
+
+	new iOwner = pev(ent, pev_owner);
+
+	if(is_user_connected(iOwner)) {
+		g_iFlasher = iOwner;
+		g_iFlasherTeam = get_user_team(iOwner);
+	} else {
+		g_iFlasher = 0;
+		g_iFlasherTeam = 0;
+	}
+
+	new iFailureChance = clamp(get_pcvar_num(g_aCvar[CVAR_FLASHBANG_FAILURE_CHANCE]), 0, 100);
+	g_bFlashFailed = iFailureChance > 0 && random_num(1, 100) <= iFailureChance;
 }
 
 public fnTimer(ent) {
@@ -872,8 +921,11 @@ public msgStatusIcon(msgid, msgdest, id) {
 }
 
 public msgScreenFade(msgId, msgDest, msgEnt) {
-	if(!g_iFlasherTeam || !g_bAlive[msgEnt])
+	if(!fnIsFlashScreenFade() || !g_iFlasherTeam || !g_bAlive[msgEnt])
 		return PLUGIN_CONTINUE;
+
+	if(g_bFlashFailed)
+		return PLUGIN_HANDLED;
 
 	if(g_iTimer && get_pcvar_num(g_aCvar[CVAR_TIMER_ANTIFLASH_CT]) == 1 && get_user_team(msgEnt) == 2)
 		return PLUGIN_HANDLED;
@@ -884,25 +936,16 @@ public msgScreenFade(msgId, msgDest, msgEnt) {
 	if(g_iFlasherTeam == get_user_team(msgEnt) && get_pcvar_num(g_aCvar[CVAR_FLASH_TEAMMATE]) == 0)
 		return PLUGIN_HANDLED;
 
-	new iFlashBangFailureChance = get_pcvar_num(g_aCvar[CVAR_FLASHBANG_FAILURE_CHANCE]);
-
-	if(iFlashBangFailureChance > 0) {
-		if(random_num(1, 100) <= iFlashBangFailureChance) {
-			return PLUGIN_HANDLED;
-		}
-	}
-
 	return PLUGIN_CONTINUE;
 }
 
-public msgSendAudio(msgId, msgDest, msgEnt) {
-	static id, text[19];
-	get_msg_arg_string(2, text, charsmax(text));
-
-	if(text[7] == 'F' && text[11] == 'I' && text[13] == 'H') {
-		g_iFlasher = (id = get_msg_arg_int(1));
-		g_iFlasherTeam = get_user_team(id);
-	}
+bool:fnIsFlashScreenFade() {
+	return (
+		get_msg_arg_int(4) == 255 &&
+		get_msg_arg_int(5) == 255 &&
+		get_msg_arg_int(6) == 255 &&
+		get_msg_arg_int(7) > 0
+	);
 }
 
 public fnChooseTeam(id) {
