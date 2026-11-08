@@ -7,6 +7,8 @@ SOURCE_PATH = Path(__file__).parents[1] / "src" / "scripting" / "hns.sma"
 SOURCE = SOURCE_PATH.read_text(encoding="utf-8")
 CONFIG_PATH = Path(__file__).parents[1] / "src" / "configs" / "hns.cfg"
 CONFIG = CONFIG_PATH.read_text(encoding="cp1251")
+LANG_PATH = Path(__file__).parents[1] / "src" / "data" / "lang" / "hns.txt"
+LANG = LANG_PATH.read_text(encoding="utf-8")
 
 
 def function_body(name: str) -> str:
@@ -127,6 +129,19 @@ class HnsSourceRegressionTests(unittest.TestCase):
       "fnNotifyFlashbangFailure",
       function_body("msgScreenFade"),
     )
+
+  def test_antifrag_scaffolding_is_removed(self):
+    for stale_text in (
+      "Anti Frag",
+      "Anti-Frag",
+      "af_active",
+      "af_type",
+      "af_time",
+      "HNS_AF_",
+    ):
+      self.assertNotIn(stale_text, SOURCE)
+      self.assertNotIn(stale_text, CONFIG)
+      self.assertNotIn(stale_text, LANG)
 
   def test_alive_checks_use_engine_state_instead_of_cached_flags(self):
     self.assertNotIn("g_bAlive", SOURCE)
