@@ -143,6 +143,9 @@ class HnsSourceRegressionTests(unittest.TestCase):
       self.assertNotIn(stale_text, CONFIG)
       self.assertNotIn(stale_text, LANG)
 
+  def test_obsolete_player_model_todo_is_removed(self):
+    self.assertNotIn("Стандартные модельки", SOURCE)
+
   def test_alive_checks_use_engine_state_instead_of_cached_flags(self):
     self.assertNotIn("g_bAlive", SOURCE)
     self.assertIn("if(is_user_alive(id))", function_body("fnSayAfk"))
