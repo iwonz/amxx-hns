@@ -267,7 +267,11 @@ public fnSayPlay(id) {
 		return PLUGIN_HANDLED;
 	}
 
-	// code ...
+	if(get_user_team(id) != 3 || !fnIsPlayableTeam(g_aIsAfkTeam[id])) {
+		ChatColor(id, "%s Вы не можете вернуться в игру этой командой!", CHAT_PREFIX);
+		return PLUGIN_HANDLED;
+	}
+
 	cs_set_user_team(id, g_aIsAfkTeam[id]);
 
 	if(get_pcvar_num(g_aCvar[CVAR_AFK_CONTROL_TIMER_REVIVE]) == 1 && g_iTimer)
@@ -278,6 +282,10 @@ public fnSayPlay(id) {
 	g_aIsAfkTeam[id] = 0;
 
 	return PLUGIN_HANDLED;
+}
+
+bool:fnIsPlayableTeam(iTeam) {
+	return iTeam == 1 || iTeam == 2;
 }
 
 public fnAfkControlRevive(id)
