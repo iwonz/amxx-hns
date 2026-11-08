@@ -1,4 +1,3 @@
-// Кастомные звуки на победу
 // Сообщения о командах в чате
 // Проверить g_aCountdownSound что играет и g_aIsAfkTeam
 // Проверить антифлеш кт во время отсчёта
@@ -22,8 +21,11 @@
 #define TASK_FORCE_JOIN 1300
 #define TASK_GIVE_WEAPONS 1400
 #define MAX_TRACKED_ENTITIES 2049
+#define MAX_SOUND_PATH_LENGTH 63
 
 new const FLASHBANG_MODEL[] = "models/w_flashbang.mdl";
+new g_szHidersWinSound[MAX_SOUND_PATH_LENGTH + 1] = "radio/terwin.wav";
+new g_szSeekersWinSound[MAX_SOUND_PATH_LENGTH + 1] = "radio/ctwin.wav";
 
 new bool:g_bStart = false;
 new bool:g_bCountdownActive = false;
@@ -63,6 +65,9 @@ enum _:g_eCVARS {
 	CVAR_TIMER_ANTIFLASH_CT,
 
 	CVAR_CD_SOUND,
+	CVAR_WIN_SOUND_MODE,
+	CVAR_WIN_SOUND_HIDERS,
+	CVAR_WIN_SOUND_SEEKERS,
 
 	CVAR_CT_TIMER_FADE_SCREEN,
 	CVAR_CT_TIMER_FADE_SCREEN_R,
@@ -127,6 +132,9 @@ public plugin_init() {
 	g_aCvar[CVAR_TIMER_ANTIFLASH_CT] = register_cvar("hns_timer_antiflash_ct", "1");
 
 	g_aCvar[CVAR_CD_SOUND] = register_cvar("hns_cd_sound", "1");
+	g_aCvar[CVAR_WIN_SOUND_MODE] = register_cvar("hns_win_sound_mode", "3");
+	g_aCvar[CVAR_WIN_SOUND_HIDERS] = register_cvar("hns_win_sound_hiders", g_szHidersWinSound);
+	g_aCvar[CVAR_WIN_SOUND_SEEKERS] = register_cvar("hns_win_sound_seekers", g_szSeekersWinSound);
 
 	g_aCvar[CVAR_CT_TIMER_FADE_SCREEN] = register_cvar("hns_ct_timer_fade_screen", "1");
 	g_aCvar[CVAR_CT_TIMER_FADE_SCREEN_R] = register_cvar("hns_ct_timer_fade_screen_r", "0");
@@ -484,6 +492,8 @@ public fnRoundEnd() {
 	switch(fnTRAlive()) {
 		// Terrorist(s) alive, e.g hiders win
 		case true: {
+			fnPlayWinSound(1);
+
 			ClearDHUDMessages(0);
 			set_dhudmessage(255, 0, 0, -1.0, -0.65, 0, 0.0, 5.0, 0.1, 1.0);
 			show_dhudmessage(0, "Прячущиеся победили!");
@@ -492,6 +502,7 @@ public fnRoundEnd() {
 		// No terrorist(s) alive, e.g seekers win
 		case false: {
 			set_task(0.1, "fnSwapTeams");
+			fnPlayWinSound(2);
 
 			ClearDHUDMessages(0);
 			set_dhudmessage(0, 0, 255, -1.0, -0.65, 0, 0.0, 5.0, 0.1, 1.0);
@@ -501,6 +512,23 @@ public fnRoundEnd() {
 
 	g_bStart = false;
 	return 0;
+}
+
+fnPlayWinSound(iWinner) {
+	new iSoundMode = clamp(get_pcvar_num(g_aCvar[CVAR_WIN_SOUND_MODE]), 0, 3);
+
+	if(iSoundMode != 3 && iSoundMode != iWinner)
+		return;
+
+	new szSound[MAX_SOUND_PATH_LENGTH + 1];
+
+	switch(iWinner) {
+		case 1: copy(szSound, charsmax(szSound), g_szHidersWinSound);
+		case 2: copy(szSound, charsmax(szSound), g_szSeekersWinSound);
+	}
+
+	if(szSound[0])
+		client_cmd(0, "spk %s", szSound);
 }
 
 fnRemoveRoundTasks(id) {
@@ -870,6 +898,8 @@ fnMakeScreenFade(id, r = 0, g = 0, b = 0, alpha = 100, fade = 0) {
 public plugin_precache() {
 	g_aCvar[CVAR_REMOVE_BREAKABLES] = register_cvar("hns_remove_breakables", "1");
 	g_aCvar[CVAR_REMOVE_DOORS] = register_cvar("hns_remove_doors", "1");
+	fnLoadWinSoundConfig();
+	fnPrecacheWinSounds();
 
 	g_RegisterSpawn = register_forward(FM_Spawn, "fwdEntitySpawn");
 
@@ -881,6 +911,45 @@ public plugin_precache() {
 	}
 
 	precache_sound("hns/falldown/1.wav");
+}
+
+fnLoadWinSoundConfig() {
+	new szConfigDir[128], szConfigPath[160];
+	get_localinfo("amxx_configsdir", szConfigDir, charsmax(szConfigDir));
+	formatex(szConfigPath, charsmax(szConfigPath), "%s/hns.cfg", szConfigDir);
+
+	new iFile = fopen(szConfigPath, "rt");
+
+	if(!iFile)
+		return;
+
+	new szLine[192], szKey[64], szValue[MAX_SOUND_PATH_LENGTH + 1];
+
+	while(!feof(iFile)) {
+		fgets(iFile, szLine, charsmax(szLine));
+		trim(szLine);
+
+		if(!szLine[0] || szLine[0] == ';' || (szLine[0] == '/' && szLine[1] == '/'))
+			continue;
+
+		szKey[0] = szValue[0] = 0;
+		parse(szLine, szKey, charsmax(szKey), szValue, charsmax(szValue));
+
+		if(equal(szKey, "hns_win_sound_hiders"))
+			copy(g_szHidersWinSound, charsmax(g_szHidersWinSound), szValue);
+		else if(equal(szKey, "hns_win_sound_seekers"))
+			copy(g_szSeekersWinSound, charsmax(g_szSeekersWinSound), szValue);
+	}
+
+	fclose(iFile);
+}
+
+fnPrecacheWinSounds() {
+	if(g_szHidersWinSound[0])
+		precache_sound(g_szHidersWinSound);
+
+	if(g_szSeekersWinSound[0] && !equal(g_szSeekersWinSound, g_szHidersWinSound))
+		precache_sound(g_szSeekersWinSound);
 }
 
 public fwdEntitySpawn(ent) {

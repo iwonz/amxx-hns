@@ -146,6 +146,36 @@ class HnsSourceRegressionTests(unittest.TestCase):
   def test_obsolete_player_model_todo_is_removed(self):
     self.assertNotIn("Стандартные модельки", SOURCE)
 
+  def test_win_sounds_are_configured_precached_and_played_by_winner(self):
+    for cvar_name in (
+      "hns_win_sound_mode",
+      "hns_win_sound_hiders",
+      "hns_win_sound_seekers",
+    ):
+      self.assertIn(cvar_name, SOURCE)
+      self.assertIn(cvar_name, CONFIG)
+
+    precache_body = function_body("plugin_precache")
+    self.assertIn("fnLoadWinSoundConfig();", precache_body)
+    self.assertIn("fnPrecacheWinSounds();", precache_body)
+    self.assertLess(
+      precache_body.index("fnLoadWinSoundConfig();"),
+      precache_body.index("fnPrecacheWinSounds();"),
+    )
+
+    win_precache_body = function_body("fnPrecacheWinSounds")
+    self.assertIn("precache_sound(g_szHidersWinSound);", win_precache_body)
+    self.assertIn("precache_sound(g_szSeekersWinSound);", win_precache_body)
+
+    round_end_body = function_body("fnRoundEnd")
+    self.assertIn("fnPlayWinSound(1);", round_end_body)
+    self.assertIn("fnPlayWinSound(2);", round_end_body)
+
+    play_body = function_body("fnPlayWinSound")
+    self.assertIn("CVAR_WIN_SOUND_MODE", play_body)
+    self.assertIn('client_cmd(0, "spk %s", szSound);', play_body)
+    self.assertNotIn("Кастомные звуки на победу", SOURCE)
+
   def test_alive_checks_use_engine_state_instead_of_cached_flags(self):
     self.assertNotIn("g_bAlive", SOURCE)
     self.assertIn("if(is_user_alive(id))", function_body("fnSayAfk"))
