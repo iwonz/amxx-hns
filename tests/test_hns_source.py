@@ -221,6 +221,46 @@ class HnsSourceRegressionTests(unittest.TestCase):
     self.assertLess(body.index(flash_guard), body.index(countdown_guard))
     self.assertNotIn("Проверить антифлеш кт", SOURCE)
 
+  def test_all_player_facing_text_uses_complete_bilingual_dictionary(self):
+    expected_keys = {
+      "HNS_CHAT_PREFIX",
+      "HNS_FEATURE_DISABLED",
+      "HNS_ALREADY_SPECTATOR",
+      "HNS_RETURN_TO_GAME_HINT",
+      "HNS_MOVED_TO_SPECTATOR",
+      "HNS_CANNOT_RETURN_TO_GAME",
+      "HNS_RETURNED_TO_GAME",
+      "HNS_COUNTDOWN_SOUND_SERVER_DISABLED",
+      "HNS_COUNTDOWN_SOUND_DISABLED",
+      "HNS_COUNTDOWN_SOUND_ENABLED",
+      "HNS_FLASH_FAILED_CHAT",
+      "HNS_FLASH_FAILED_HUD",
+      "HNS_HIDERS_WIN",
+      "HNS_SEEKERS_WIN",
+      "HNS_COUNTDOWN",
+      "HNS_ROUND_START",
+      "HNS_FALL_DAMAGE",
+    }
+    keys_by_language = {"ru": set(), "en": set()}
+    language = None
+
+    for raw_line in LANG.splitlines():
+      line = raw_line.strip()
+      if line in ("[ru]", "[en]"):
+        language = line[1:-1]
+      elif language and line and not line.startswith(";"):
+        keys_by_language[language].add(line.split("=", 1)[0].strip())
+
+    self.assertEqual(expected_keys, keys_by_language["ru"])
+    self.assertEqual(expected_keys, keys_by_language["en"])
+    self.assertIn('register_dictionary("hns.txt");', SOURCE)
+    self.assertNotIn("#define CHAT_PREFIX", SOURCE)
+    self.assertNotIn("WordForm", SOURCE)
+    self.assertIsNone(re.search(r'"[^"\n]*[А-Яа-яЁё][^"\n]*"', SOURCE))
+
+    for key in expected_keys:
+      self.assertIn(f'"{key}"', SOURCE)
+
   def test_alive_checks_use_engine_state_instead_of_cached_flags(self):
     self.assertNotIn("g_bAlive", SOURCE)
     self.assertIn("if(is_user_alive(id))", function_body("fnSayAfk"))

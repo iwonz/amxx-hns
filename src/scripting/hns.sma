@@ -9,8 +9,6 @@
 #define VERSION "1.0"
 #define AUTHOR "foxmits"
 
-#define CHAT_PREFIX "^4[^1HNS by foxmits^4]^1"
-
 #define TASK_AUTOHEAL 1000
 #define TASK_REVIVE 1100
 #define TASK_AFK_REVIVE 1200
@@ -119,6 +117,7 @@ new g_aCvar[g_eCVARS];
 
 public plugin_init() {
 	register_plugin(PLUGIN, VERSION, AUTHOR);
+	register_dictionary("hns.txt");
 
 	// CVARS
 	g_aCvar[CVAR_TIMER] = register_cvar("hns_timer", "10");
@@ -255,15 +254,15 @@ public client_disconnect(id) {
 
 public fnSayAfk(id) {
 	if(get_pcvar_num(g_aCvar[CVAR_AFK_CONTROL]) == 0) {
-		ChatColor(id, "%s Функция ^3отключена на сервере!", CHAT_PREFIX);
+		ChatColorKey(id, "HNS_FEATURE_DISABLED");
 		return PLUGIN_HANDLED;
 	}
 
 	new iUserTeam = get_user_team(id);
 
 	if(iUserTeam == 3) {
-		ChatColor(id, "%s Вы уже находитесь в наблюдателях!", CHAT_PREFIX);
-		ChatColor(id, "%s Чтобы ^4вернуться в игру^1, напишите ^4/play ^1или ^4/back ^1в чате.", CHAT_PREFIX);
+		ChatColorKey(id, "HNS_ALREADY_SPECTATOR");
+		ChatColorKey(id, "HNS_RETURN_TO_GAME_HINT");
 		return PLUGIN_HANDLED;
 	}
 
@@ -272,8 +271,8 @@ public fnSayAfk(id) {
 
 	cs_set_user_team(id, 3);
 
-	ChatColor(id, "%s Вы успешно ^3перемещены в наблюдатели^1!", CHAT_PREFIX);
-	ChatColor(id, "%s Чтобы ^4вернуться в игру^1, напишите ^4/play ^1или ^4/back ^1в чате.", CHAT_PREFIX);
+	ChatColorKey(id, "HNS_MOVED_TO_SPECTATOR");
+	ChatColorKey(id, "HNS_RETURN_TO_GAME_HINT");
 
 	g_aIsAfkTeam[id] = iUserTeam;
 
@@ -282,12 +281,12 @@ public fnSayAfk(id) {
 
 public fnSayPlay(id) {
 	if(get_pcvar_num(g_aCvar[CVAR_AFK_CONTROL]) == 0) {
-		ChatColor(id, "%s Функция ^3отключена на сервере!", CHAT_PREFIX);
+		ChatColorKey(id, "HNS_FEATURE_DISABLED");
 		return PLUGIN_HANDLED;
 	}
 
 	if(get_user_team(id) != 3 || !fnIsPlayableTeam(g_aIsAfkTeam[id])) {
-		ChatColor(id, "%s Вы не можете вернуться в игру этой командой!", CHAT_PREFIX);
+		ChatColorKey(id, "HNS_CANNOT_RETURN_TO_GAME");
 		return PLUGIN_HANDLED;
 	}
 
@@ -298,7 +297,7 @@ public fnSayPlay(id) {
 		set_task(0.2, "fnAfkControlRevive", TASK_AFK_REVIVE + id);
 	}
 
-	ChatColor(id, "%s Вы успешно ^4вернулись в игру^1!", CHAT_PREFIX);
+	ChatColorKey(id, "HNS_RETURNED_TO_GAME");
 
 	g_aIsAfkTeam[id] = 0;
 
@@ -324,14 +323,14 @@ public fnAfkControlRevive(iTaskID) {
 
 public fnToggleCountdownSound(id) {
 	if(get_pcvar_num(g_aCvar[CVAR_CD_SOUND]) == 0) {
-		ChatColor(id, "%s Звук отсчёта до начала раунда ^3отключен ^1на сервере!", CHAT_PREFIX);
+		ChatColorKey(id, "HNS_COUNTDOWN_SOUND_SERVER_DISABLED");
 		return PLUGIN_HANDLED;
 	}
 
 	if(g_aCountdownSound[id])
-		ChatColor(id, "%s Вы ^3выключили ^1звук отсчёта до начала раунда!", CHAT_PREFIX);
+		ChatColorKey(id, "HNS_COUNTDOWN_SOUND_DISABLED");
 	else
-		ChatColor(id, "%s Вы ^4включили ^1звук отсчёта до начала раунда!", CHAT_PREFIX);
+		ChatColorKey(id, "HNS_COUNTDOWN_SOUND_ENABLED");
 
 	g_aCountdownSound[id] = !g_aCountdownSound[id];
 
@@ -491,25 +490,30 @@ public fnRoundEnd() {
 		// Terrorist(s) alive, e.g hiders win
 		case true: {
 			fnPlayWinSound(1);
-
-			ClearDHUDMessages(0);
-			set_dhudmessage(255, 0, 0, -1.0, -0.65, 0, 0.0, 5.0, 0.1, 1.0);
-			show_dhudmessage(0, "Прячущиеся победили!");
+			fnShowRoundWinMessage("HNS_HIDERS_WIN", 255, 0, 0);
 		}
 
 		// No terrorist(s) alive, e.g seekers win
 		case false: {
 			set_task(0.1, "fnSwapTeams");
 			fnPlayWinSound(2);
-
-			ClearDHUDMessages(0);
-			set_dhudmessage(0, 0, 255, -1.0, -0.65, 0, 0.0, 5.0, 0.1, 1.0);
-			show_dhudmessage(0, "Ищущие победили!");
+			fnShowRoundWinMessage("HNS_SEEKERS_WIN", 0, 0, 255);
 		}
 	}
 
 	g_bStart = false;
 	return 0;
+}
+
+fnShowRoundWinMessage(const szKey[], iRed, iGreen, iBlue) {
+	new aPlayers[32], iPlayersCount;
+	get_players(aPlayers, iPlayersCount, "ch");
+
+	for(new i = 0; i < iPlayersCount; i++) {
+		ClearDHUDMessages(aPlayers[i]);
+		set_dhudmessage(iRed, iGreen, iBlue, -1.0, -0.65, 0, 0.0, 5.0, 0.1, 1.0);
+		show_dhudmessage(aPlayers[i], "%L", aPlayers[i], szKey);
+	}
 }
 
 fnPlayWinSound(iWinner) {
@@ -656,10 +660,10 @@ fnNotifyFlashbangFailure(id) {
 
 	switch(iNotifyMode) {
 		case 1:
-			ChatColor(id, "%s Ваша Flashbang ^3не сработала^1!", CHAT_PREFIX);
+			ChatColorKey(id, "HNS_FLASH_FAILED_CHAT");
 		case 2: {
 			set_dhudmessage(255, 80, 0, -1.0, 0.65, 0, 0.0, 2.0, 0.1, 0.2);
-			show_dhudmessage(id, "Flashbang не сработала!");
+			show_dhudmessage(id, "%L", id, "HNS_FLASH_FAILED_HUD");
 		}
 		case 3:
 			client_cmd(id, "spk buttons/button10.wav");
@@ -693,7 +697,7 @@ public fnTimer(ent) {
 
 				ClearDHUDMessages(aPlayers[i]);
 				set_dhudmessage(255, 0, 0, -1.0, -0.65, 0, 0.0, 1.0, 0.1, 1.0);
-				show_dhudmessage(aPlayers[i], "Игра начнётся через %s", WordForm(g_iTimer, "секунду", "секунды", "секунд"));
+				show_dhudmessage(aPlayers[i], "%L", aPlayers[i], "HNS_COUNTDOWN", g_iTimer);
 			}
 		}
 
@@ -725,7 +729,7 @@ fnEndCountdown(bool:bShowStartMessage) {
 
 		if(bShowStartMessage) {
 			set_dhudmessage(random_num(0, 255), random_num(0, 255), random_num(0, 255), -1.0, -0.65, 0, 0.0, 5.0, 0.1, 1.0);
-			show_dhudmessage(aPlayers[i], "Понеслась!!!");
+			show_dhudmessage(aPlayers[i], "%L", aPlayers[i], "HNS_ROUND_START");
 		}
 
 		if(get_user_team(aPlayers[i]) == 2) {
@@ -750,7 +754,7 @@ public fnTakeDamage(iVictim, iInflictor, iAttacker, float:fDamage, bitsDamageTyp
 
 		if(get_pcvar_num(g_aCvar[CVAR_FALLDOWN_SHOW_DMG]) == 1) {
 			set_hudmessage(255, 0, 0, 0.05, 0.9, 0, 0.1, 3.0, 0.01, 0.01, -1);
-			ShowSyncHudMsg(iVictim, g_SyncHud, "Урон: %d", iDamage);
+			ShowSyncHudMsg(iVictim, g_SyncHud, "%L", iVictim, "HNS_FALL_DAMAGE", iDamage);
 		}
 
 		if(get_pcvar_num(g_aCvar[CVAR_FALLDOWN_FADESCREEN]) == 1)
@@ -1028,7 +1032,7 @@ fnHandleTeamChange(id) {
 		if(!g_aIsAfkTeam[id])
 			return PLUGIN_CONTINUE;
 		else {
-			ChatColor(id, "%s Чтобы ^4вернуться в игру^1, напишите ^4/play ^1или ^4/back ^1в чате!", CHAT_PREFIX);
+			ChatColorKey(id, "HNS_RETURN_TO_GAME_HINT");
 			return PLUGIN_HANDLED;
 		}
 	}
@@ -1074,44 +1078,35 @@ bool:fnTRAlive() {
 	return false;
 }
 
-stock ChatColor(const id, const szMessage[], any:...) {
-    static pnum, players[32], szMsg[190], IdMsg;
-    vformat(szMsg, charsmax(szMsg), szMessage, 3);
+stock ChatColorKey(id, const szKey[]) {
+	new szMessage[190];
+	formatex(szMessage, charsmax(szMessage), "%L %L", id, "HNS_CHAT_PREFIX", id, szKey);
 
-    if(!IdMsg)
-        IdMsg = get_user_msgid("SayText");
+	replace_all(szMessage, charsmax(szMessage), "!n", "^1");
+	replace_all(szMessage, charsmax(szMessage), "!t", "^3");
+	replace_all(szMessage, charsmax(szMessage), "!g", "^4");
 
-    if(id) {
-        players[0] = id;
-        pnum = 1;
-    }
-    else
-        get_players(players, pnum, "ch");
-
-    for(new i; i < pnum; i++) {
-        message_begin(MSG_ONE, IdMsg, .player = players[i]);
-        write_byte(players[i]);
-        write_string(szMsg);
-        message_end();
-    }
+	SendChatColor(id, szMessage);
 }
 
-stock WordForm(iNum, szForm1[], szForm2[], szForm3[]) {
-    new szResult[128];
+stock SendChatColor(const id, const szMessage[]) {
+	static iPlayersCount, aPlayers[32], iMessageId;
 
-    iNum = abs(iNum) % 100;
-    new iNum_x = iNum % 10;
+	if(!iMessageId)
+		iMessageId = get_user_msgid("SayText");
 
-    if(iNum > 10 && iNum < 20)
-        formatex(szResult, 127, "%d %s", iNum, szForm3);
-    else if(iNum_x > 1 && iNum_x < 5)
-        formatex(szResult, 127, "%d %s", iNum, szForm2);
-    else if(iNum_x == 1)
-        formatex(szResult, 127, "%d %s", iNum, szForm1);
-    else
-        formatex(szResult, 127, "%d %s", iNum, szForm3);
+	if(id) {
+		aPlayers[0] = id;
+		iPlayersCount = 1;
+	} else
+		get_players(aPlayers, iPlayersCount, "ch");
 
-    return szResult;
+	for(new i = 0; i < iPlayersCount; i++) {
+		message_begin(MSG_ONE, iMessageId, .player = aPlayers[i]);
+		write_byte(aPlayers[i]);
+		write_string(szMessage);
+		message_end();
+	}
 }
 
 stock fnUserSilentKill(id) {
