@@ -5,6 +5,8 @@ from pathlib import Path
 
 SOURCE_PATH = Path(__file__).parents[1] / "src" / "scripting" / "hns.sma"
 SOURCE = SOURCE_PATH.read_text(encoding="utf-8")
+CONFIG_PATH = Path(__file__).parents[1] / "src" / "configs" / "hns.cfg"
+CONFIG = CONFIG_PATH.read_text(encoding="cp1251")
 
 
 def function_body(name: str) -> str:
@@ -96,6 +98,35 @@ class HnsSourceRegressionTests(unittest.TestCase):
     self.assertIn("g_bFlashFailed", fade_body)
     self.assertNotIn("random_num", fade_body)
     self.assertIn("random_num", function_body("fnPrepareFlashbang"))
+
+  def test_flash_failure_notification_mode_is_configurable_and_sent_once(self):
+    self.assertIn("CVAR_FLASHBANG_FAILURE_NOTIFY", SOURCE)
+    self.assertIn(
+      'register_cvar("hns_flashbang_failure_notify", "1")',
+      SOURCE,
+    )
+    self.assertIn('hns_flashbang_failure_notify "1"', CONFIG)
+    self.assertIn('server_cmd("exec ^\"%s/hns.cfg^\"", szConfigDir);', SOURCE)
+
+    prepare_body = function_body("fnPrepareFlashbang")
+    self.assertIn(
+      "if(g_bFlashFailed && is_user_connected(iOwner))",
+      prepare_body,
+    )
+    self.assertIn("fnNotifyFlashbangFailure(iOwner);", prepare_body)
+
+    notify_body = function_body("fnNotifyFlashbangFailure")
+    self.assertIn("switch(iNotifyMode)", notify_body)
+    self.assertIn("case 1:", notify_body)
+    self.assertIn("case 2:", notify_body)
+    self.assertIn("case 3:", notify_body)
+    self.assertIn("ChatColor", notify_body)
+    self.assertIn("show_dhudmessage", notify_body)
+    self.assertIn('client_cmd(id, "spk buttons/button10.wav")', notify_body)
+    self.assertNotIn(
+      "fnNotifyFlashbangFailure",
+      function_body("msgScreenFade"),
+    )
 
   def test_alive_checks_use_engine_state_instead_of_cached_flags(self):
     self.assertNotIn("g_bAlive", SOURCE)

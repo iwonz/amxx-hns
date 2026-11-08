@@ -1,4 +1,3 @@
-// Добавить какой-то знак, что флешка просрала
 // Anti Frag
 // Стандартные модельки
 // Кастомные звуки на победу
@@ -82,6 +81,7 @@ enum _:g_eCVARS {
 	CVAR_FLASHBANG_COUNT,
 
 	CVAR_FLASHBANG_FAILURE_CHANCE,
+	CVAR_FLASHBANG_FAILURE_NOTIFY,
 
 	CVAR_SMOKEGRENADE_MODE,
 
@@ -142,6 +142,7 @@ public plugin_init() {
 	g_aCvar[CVAR_FLASHBANG_COUNT] = register_cvar("hns_flashbang_count", "2");
 
 	g_aCvar[CVAR_FLASHBANG_FAILURE_CHANCE] = register_cvar("hns_flashbang_failure_chance", "0");
+	g_aCvar[CVAR_FLASHBANG_FAILURE_NOTIFY] = register_cvar("hns_flashbang_failure_notify", "1");
 
 	g_aCvar[CVAR_SMOKEGRENADE_MODE] = register_cvar("hns_smokegrenade_mode", "1");
 
@@ -228,6 +229,12 @@ public plugin_init() {
 	register_clcmd("jointeam", "fnJoinTeam");
 
 	g_SyncHud = CreateHudSyncObj();
+}
+
+public plugin_cfg() {
+	new szConfigDir[128];
+	get_localinfo("amxx_configsdir", szConfigDir, charsmax(szConfigDir));
+	server_cmd("exec ^"%s/hns.cfg^"", szConfigDir);
 }
 
 public client_connect(id) {
@@ -620,6 +627,24 @@ fnPrepareFlashbang(ent) {
 
 	new iFailureChance = clamp(get_pcvar_num(g_aCvar[CVAR_FLASHBANG_FAILURE_CHANCE]), 0, 100);
 	g_bFlashFailed = iFailureChance > 0 && random_num(1, 100) <= iFailureChance;
+
+	if(g_bFlashFailed && is_user_connected(iOwner))
+		fnNotifyFlashbangFailure(iOwner);
+}
+
+fnNotifyFlashbangFailure(id) {
+	new iNotifyMode = clamp(get_pcvar_num(g_aCvar[CVAR_FLASHBANG_FAILURE_NOTIFY]), 0, 3);
+
+	switch(iNotifyMode) {
+		case 1:
+			ChatColor(id, "%s Ваша Flashbang ^3не сработала^1!", CHAT_PREFIX);
+		case 2: {
+			set_dhudmessage(255, 80, 0, -1.0, 0.65, 0, 0.0, 2.0, 0.1, 0.2);
+			show_dhudmessage(id, "Flashbang не сработала!");
+		}
+		case 3:
+			client_cmd(id, "spk buttons/button10.wav");
+	}
 }
 
 public fnTimer(ent) {
