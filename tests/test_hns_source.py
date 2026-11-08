@@ -104,6 +104,15 @@ class HnsSourceRegressionTests(unittest.TestCase):
     self.assertIn("!is_user_alive(msgEnt)", function_body("msgScreenFade"))
     self.assertIn("is_user_alive(aPlayers[i])", function_body("fnTRAlive"))
 
+  def test_cmdstart_preserves_game_callback_when_blocking_knife_attacks(self):
+    body = function_body("fwdCmdStart")
+
+    self.assertNotIn("return 4;", body)
+    self.assertNotIn("FMRES_SUPERCEDE", body)
+    self.assertIn("IN_ATTACK | IN_ATTACK2", body)
+    self.assertIn("return FMRES_HANDLED;", body)
+    self.assertIn("return FMRES_IGNORED;", body)
+
 
 if __name__ == "__main__":
   unittest.main()

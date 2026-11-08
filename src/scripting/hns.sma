@@ -780,35 +780,24 @@ public fwdEmitSound(id, channel, const szSound[]) {
 
 public fwdCmdStart(id, handle) {
 	if(!is_user_alive(id))
-		return 1;
+		return FMRES_IGNORED;
 
-	static weapon;
-	weapon = get_user_weapon(id);
-
-	if(weapon != CSW_KNIFE)
-		return 1;
-
-	static button;
-	button = get_uc(handle, UC_Buttons);
+	if(get_user_weapon(id) != CSW_KNIFE)
+		return FMRES_IGNORED;
 
 	new iCvarFakeMode = get_pcvar_num(g_aCvar[CVAR_TR_FAKE_KNIFE_MODE]);
 
-	switch(get_user_team(id)) {
-		case 1: {
-			if(iCvarFakeMode == 1 || iCvarFakeMode == 2) {
-				if(button & IN_ATTACK)
-					button &= ~IN_ATTACK; // Block
+	if(get_user_team(id) != 1 || (iCvarFakeMode != 1 && iCvarFakeMode != 2))
+		return FMRES_IGNORED;
 
-				if(button & IN_ATTACK2)
-					button &= ~IN_ATTACK2; // Block
+	new iButtons = get_uc(handle, UC_Buttons);
+	new iBlockedButtons = IN_ATTACK | IN_ATTACK2;
 
-				set_uc(handle, UC_Buttons, button);
-				return 4;
-			}
-		}
-	}
+	if(!(iButtons & iBlockedButtons))
+		return FMRES_IGNORED;
 
-	return 1;
+	set_uc(handle, UC_Buttons, iButtons & ~iBlockedButtons);
+	return FMRES_HANDLED;
 }
 
 public taskGiveWeapons(iTaskID) {
