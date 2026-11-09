@@ -20,6 +20,25 @@
 - **WHEN** файл не найден или отдельная команда отсутствует
 - **THEN** соответствующий Cvar сохраняет зарегистрированное кодом fallback-значение
 
+### Requirement: Допустимые границы Cvar
+
+Числовые Cvar SHALL ограничиваться диапазонами, поддерживаемыми соответствующей HNS-механикой, при регистрации в AMX Mod X 1.10.
+
+#### Scenario: Указано значение ниже минимума
+
+- **WHEN** администратор задаёт числовой Cvar ниже зарегистрированной нижней границы
+- **THEN** эффективное значение ограничивается нижней границей
+
+#### Scenario: Указано значение выше максимума
+
+- **WHEN** администратор задаёт числовой Cvar выше зарегистрированной верхней границы
+- **THEN** эффективное значение ограничивается верхней границей
+
+#### Scenario: Указано допустимое значение
+
+- **WHEN** администратор задаёт числовой Cvar внутри зарегистрированного диапазона
+- **THEN** плагин использует заданное значение без дополнительного изменения
+
 ### Requirement: Реестр Cvar раунда и звуков
 
 Плагин SHALL регистрировать и поддерживать следующие Cvar: `hns_timer`, `hns_timer_immortal`, `hns_timer_immortal_delay`, `hns_timer_antiflash_ct`, `hns_cd_sound`, `hns_win_sound_mode`, `hns_win_sound_hiders`, `hns_win_sound_seekers`, `hns_ct_timer_fade_screen`, `hns_ct_timer_fade_screen_r`, `hns_ct_timer_fade_screen_g`, `hns_ct_timer_fade_screen_b`, `hns_ct_timer_fade_screen_alpha`.
@@ -27,7 +46,7 @@
 #### Scenario: Установлен поставляемый hns.cfg
 
 - **WHEN** конфигурация выполнена
-- **THEN** эффективные поставляемые значения равны `10`, `1`, `3.0`, `1`, `1`, `3`, `radio/terwin.wav`, `radio/ctwin.wav`, `1`, `0`, `0`, `0`, `150` соответственно, кроме описанного ниже расхождения имён цветовых строк
+- **THEN** эффективные поставляемые значения равны `10`, `1`, `3.0`, `1`, `1`, `3`, `radio/terwin.wav`, `radio/ctwin.wav`, `1`, `0`, `0`, `0`, `150` соответственно
 
 ### Requirement: Реестр Cvar экипировки и Flashbang
 
@@ -113,6 +132,11 @@
 - **WHEN** добавляется или меняется format key
 - **THEN** RU и EN содержат одинаковый набор ключей и совместимые placeholders
 
+#### Scenario: В словаре используется цветной чат
+
+- **WHEN** chat key содержит `^1`, `^3` или `^4`
+- **THEN** AMX Mod X передаёт игроку default, team или green цвет без промежуточных пользовательских маркеров
+
 ### Requirement: Кодировки ресурсов
 
 Репозиторий SHALL хранить `src/configs/hns.cfg` в CP1251, а Pawn, lang, Markdown, YAML и Python — в UTF-8.
@@ -122,16 +146,16 @@
 - **WHEN** конфигурация редактируется
 - **THEN** CP1251 сохраняется и декодирование `iconv -f CP1251 -t UTF-8` остаётся успешным
 
-### Requirement: Известное расхождение CT fade в hns.cfg
+### Requirement: Корректные Cvar CT fade в поставляемом конфиге
 
-Текущее состояние SHALL учитывать, что строки R/G/B/alpha в секции CT countdown поставляемого `hns.cfg` ошибочно используют имена `hns_falldown_fadescreen_*`, а корректные `hns_ct_timer_fade_screen_r`, `hns_ct_timer_fade_screen_g`, `hns_ct_timer_fade_screen_b` и `hns_ct_timer_fade_screen_alpha` зарегистрированы только кодом.
+Поставляемый `hns.cfg` SHALL задавать цвет countdown fade через `hns_ct_timer_fade_screen_r`, `hns_ct_timer_fade_screen_g`, `hns_ct_timer_fade_screen_b` и `hns_ct_timer_fade_screen_alpha`.
 
-#### Scenario: Администратор меняет подписанные CT-строки без исправления имён
+#### Scenario: Администратор меняет CT fade
 
-- **WHEN** изменяются только существующие четыре строки секции
-- **THEN** они не меняют CT countdown fade и позже перекрываются настоящей fall-down секцией
+- **WHEN** изменяются четыре строки CT countdown fade в поставляемом `hns.cfg`
+- **THEN** countdown использует заданные R/G/B/alpha и значения fall-down fade не изменяются
 
-#### Scenario: Добавлены корректные Cvar
+#### Scenario: Используются поставляемые значения
 
-- **WHEN** администратор явно задаёт `hns_ct_timer_fade_screen_r`, `hns_ct_timer_fade_screen_g`, `hns_ct_timer_fade_screen_b` и `hns_ct_timer_fade_screen_alpha`
-- **THEN** countdown использует заданные значения
+- **WHEN** `hns.cfg` не изменялся после установки
+- **THEN** CT countdown fade использует `0`, `0`, `0`, `150`, а fall-down fade использует `255`, `0`, `0`, `80`
