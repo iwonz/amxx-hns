@@ -2,10 +2,10 @@
 
 ## 1. Единая SemVer-версия
 
-- [ ] 1.1 Добавить в `tests/test_release_versioning.py` падающие тесты единственного источника версии, полного SemVer 2.0.0, стабильной/prerelease/build версии, невалидных ведущих нулей и точного совпадения `v<SemVer>`; подтвердить ожидаемое падение командой `python3 -B -m unittest tests.test_release_versioning -v`.
-- [ ] 1.2 Добавить `src/scripting/hns/version.inc` с `HNS_VERSION "1.0.0"`, подключить его в `hns.sma`, удалить самостоятельную строку `VERSION "1.0"` и реализовать команды `version`/`verify-tag` в stdlib-only `scripts/release.py`; проверить `python3 scripts/release.py version`, `python3 scripts/release.py verify-tag --tag v1.0.0` и `python3 -B -m unittest tests.test_release_versioning -v`.
-- [ ] 1.3 Скомпилировать изменённый Pawn-код официальным AMX Mod X 1.10.0.5487 командой `./amxxpc /workspace/src/scripting/hns.sma -iinclude -o/workspace/build/hns.amxx` в Linux/i386 окружении с проверенными base+cstrike archives и убедиться, что компилятор завершился без errors/warnings.
-- [ ] 1.4 Зафиксировать источник версии, helper validation и тесты отдельным атомарным commit; проверить, что `git show --stat --oneline HEAD` содержит только изменения группы 1.
+- [x] 1.1 Добавить в `tests/test_release_versioning.py` падающие тесты единственного источника версии, полного SemVer 2.0.0, стабильной/prerelease/build версии, невалидных ведущих нулей и точного совпадения `v<SemVer>`; подтвердить ожидаемое падение командой `python3 -B -m unittest tests.test_release_versioning -v`.
+- [x] 1.2 Добавить `src/scripting/hns/version.inc` с `HNS_VERSION "1.0.0"`, подключить его в `hns.sma`, удалить самостоятельную строку `VERSION "1.0"` и реализовать команды `version`/`verify-tag` в stdlib-only `scripts/release.py`; проверить `python3 scripts/release.py version`, `python3 scripts/release.py verify-tag --tag v1.0.0` и `python3 -B -m unittest tests.test_release_versioning -v`.
+- [x] 1.3 Скомпилировать изменённый Pawn-код официальным AMX Mod X 1.10.0.5487 командой `./amxxpc /workspace/src/scripting/hns.sma -iinclude -o/workspace/build/hns.amxx` в Linux/i386 окружении с проверенными base+cstrike archives и убедиться, что компилятор завершился без errors/warnings.
+- [x] 1.4 Зафиксировать источник версии, helper validation и тесты отдельным атомарным commit; проверить, что `git show --stat --oneline HEAD` содержит только изменения группы 1.
 
 ## 2. Проверяемая релизная упаковка
 

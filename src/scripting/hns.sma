@@ -5,8 +5,9 @@
 #include <cstrike>
 #include <dhudmessage>
 
+#include "hns/version.inc"
+
 #define PLUGIN "Hide N Seek: Ultimate"
-#define VERSION "1.0"
 #define AUTHOR "foxmits"
 
 #include "hns/definitions.inc"
@@ -22,7 +23,7 @@
 #include "hns/round.inc"
 
 public plugin_init() {
-	register_plugin(PLUGIN, VERSION, AUTHOR);
+	register_plugin(PLUGIN, HNS_VERSION, AUTHOR);
 	register_dictionary("hns.txt");
 
 	// CVARS

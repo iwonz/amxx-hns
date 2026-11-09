@@ -18,6 +18,7 @@ EXPECTED_INTERNAL_MODULES = {
   "round.inc",
   "team_flow.inc",
   "ui.inc",
+  "version.inc",
 }
 SOURCE = "\n".join(
   [ROOT_SOURCE]
