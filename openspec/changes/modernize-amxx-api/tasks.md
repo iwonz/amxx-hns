@@ -26,9 +26,9 @@
 
 ## 5. Сохранить стандартный fall-damage pipeline
 
-- [ ] 5.1 Добавить regression tests на парные Ham pre/post hooks, отсутствие `ExecuteHam`/`HAM_SUPERCEDE`, расчёт положительной фактической потери HP и запрет эффектов/autoheal после смерти; запустить `python3 -B -m unittest discover -s tests -v` и подтвердить ожидаемое падение
-- [ ] 5.2 Реализовать health snapshot и post-damage effects с очисткой player state, сохранив независимые HUD/sound/fade Cvar и единственную autoheal task; обновить README там, где описан fall damage
-- [ ] 5.3 Проверить зелёный `python3 -B -m unittest discover -s tests -v`, выполнить AMXX 1.10 docker-компиляцию из пункта 2.3 и зафиксировать изменение коммитом `Preserve standard fall damage pipeline` после `git diff --check`
+- [x] 5.1 Добавить regression tests на парные Ham pre/post hooks, отсутствие `ExecuteHam`/`HAM_SUPERCEDE`, расчёт положительной фактической потери HP и запрет эффектов/autoheal после смерти; запустить `python3 -B -m unittest discover -s tests -v` и подтвердить ожидаемое падение
+- [x] 5.2 Реализовать health snapshot и post-damage effects с очисткой player state, сохранив независимые HUD/sound/fade Cvar и единственную autoheal task; обновить README там, где описан fall damage
+- [x] 5.3 Проверить зелёный `python3 -B -m unittest discover -s tests -v`, выполнить AMXX 1.10 docker-компиляцию из пункта 2.3 и зафиксировать изменение коммитом `Preserve standard fall damage pipeline` после `git diff --check`
 
 ## 6. Сократить работу частых Fakemeta callbacks
 

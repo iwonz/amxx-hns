@@ -127,7 +127,8 @@ public plugin_init() {
 	register_event_ex("CurWeapon", "fnTakeKnife", RegisterEvent_Single | RegisterEvent_OnlyAlive, "1=1", "2=29");
 
 	RegisterHam(Ham_Spawn, "player", "fnPlayerSpawnAfter", 1);
-	RegisterHam(Ham_TakeDamage, "player", "fnTakeDamage");
+	RegisterHam(Ham_TakeDamage, "player", "fnTakeDamagePre");
+	RegisterHam(Ham_TakeDamage, "player", "fnTakeDamagePost", 1);
 
 	// MESSAGES
 	register_message(get_user_msgid("SendAudio"), "msgBlockWINSendAudio");
@@ -180,6 +181,7 @@ public plugin_cfg() {
 }
 
 public client_connect(id) {
+	fnResetFallDamageState(id);
 	g_bConnected[id] = true;
 	g_aCountdownSound[id] = true;
 	g_aIsAfkTeam[id] = CS_TEAM_UNASSIGNED;
@@ -187,6 +189,7 @@ public client_connect(id) {
 
 public client_disconnected(id, bool:drop, message[], maxlen) {
 	fnRemovePlayerTasks(id);
+	fnResetFallDamageState(id);
 
 	g_bConnected[id] = false;
 	g_aCountdownSound[id] = false;

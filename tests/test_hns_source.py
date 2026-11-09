@@ -489,6 +489,59 @@ class HnsSourceRegressionTests(unittest.TestCase):
       function_body("fnMakeScreenFade"),
     )
 
+  def test_fall_damage_uses_standard_pre_post_pipeline(self):
+    init_body = function_body("plugin_init")
+    self.assertIn(
+      'RegisterHam(Ham_TakeDamage, "player", "fnTakeDamagePre");',
+      init_body,
+    )
+    self.assertIn(
+      'RegisterHam(Ham_TakeDamage, "player", "fnTakeDamagePost", 1);',
+      init_body,
+    )
+    self.assertNotIn("ExecuteHam(Ham_TakeDamage", SOURCE)
+    self.assertNotIn("HAM_SUPERCEDE", function_body("fnTakeDamagePre"))
+    self.assertNotIn("HAM_SUPERCEDE", function_body("fnTakeDamagePost"))
+
+    pre_body = function_body("fnTakeDamagePre")
+    self.assertIn("if(!(bitsDamageType & DMG_FALL))", pre_body)
+    self.assertIn("g_iFallHealthBefore[iVictim] = get_user_health(iVictim);", pre_body)
+    self.assertIn("g_bFallDamagePending[iVictim] = true;", pre_body)
+    self.assertIn("return HAM_IGNORED;", pre_body)
+
+    post_body = function_body("fnTakeDamagePost")
+    pending_guard = "if(!(bitsDamageType & DMG_FALL) || !g_bFallDamagePending[iVictim])"
+    alive_guard = "if(!g_bConnected[iVictim] || !is_user_alive(iVictim))"
+    damage_calc = "new iDamage = iHealthBefore - get_user_health(iVictim);"
+    damage_guard = "if(iDamage <= 0)"
+    effects_call = "fnApplyFallDamageEffects(iVictim, iDamage);"
+
+    for expected in (
+      pending_guard,
+      "g_bFallDamagePending[iVictim] = false;",
+      alive_guard,
+      damage_calc,
+      damage_guard,
+      effects_call,
+    ):
+      self.assertIn(expected, post_body)
+
+    self.assertLess(post_body.index(alive_guard), post_body.index(damage_calc))
+    self.assertLess(post_body.index(damage_calc), post_body.index(damage_guard))
+    self.assertLess(post_body.index(damage_guard), post_body.index(effects_call))
+
+    effects_body = function_body("fnApplyFallDamageEffects")
+    for expected in (
+      'client_cmd(iVictim, "spk hns/falldown/1.wav");',
+      "ShowSyncHudMsg",
+      "fnMakeScreenFade",
+      'set_task(g_fCvarAutohealDelay, "fnAutoHeal"',
+    ):
+      self.assertIn(expected, effects_body)
+
+    self.assertIn("fnResetFallDamageState(id);", function_body("client_connect"))
+    self.assertIn("fnResetFallDamageState(id);", function_body("client_disconnected"))
+
   def test_countdown_and_fall_fades_have_independent_config_keys(self):
     expected_values = {
       "hns_ct_timer_fade_screen_r": "0",
