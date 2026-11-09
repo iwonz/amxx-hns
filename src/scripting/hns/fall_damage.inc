@@ -32,7 +32,7 @@ public fnTakeDamage(iVictim, iInflictor, iAttacker, float:fDamage, bitsDamageTyp
 			);
 
 		if(g_iCvarAutoheal == 1) {
-			if(g_iCvarAutohealMode == 3 || g_iCvarAutohealMode == get_user_team(iVictim)) {
+			if(g_iCvarAutohealMode == 3 || g_iCvarAutohealMode == _:cs_get_user_team(iVictim)) {
 				new iAutohealTaskId = TASK_AUTOHEAL + iVictim;
 
 				if(task_exists(iAutohealTaskId))

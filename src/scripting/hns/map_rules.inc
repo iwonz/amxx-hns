@@ -16,7 +16,7 @@ new const g_DefaultEntities[][] = {
 
 public fwdEntitySpawn(ent) {
 	if(!pev_valid(ent))
-		return 1;
+		return FMRES_IGNORED;
 
 	new szClass[33];
 
@@ -25,23 +25,23 @@ public fwdEntitySpawn(ent) {
 	for(new i; i < sizeof g_DefaultEntities; i++) {
 		if(equal(szClass, g_DefaultEntities[i])) {
 			engfunc(EngFunc_RemoveEntity, ent);
-			return 4;
+			return FMRES_SUPERCEDE;
 		}
 	}
 
 	if(g_iCvarRemoveDoors) {
 		if(equal(szClass, "func_door") || equal(szClass, "func_door_rotating")) {
 			engfunc(EngFunc_RemoveEntity, ent);
-			return 4;
+			return FMRES_SUPERCEDE;
 		}
 	}
 
 	if(g_iCvarRemoveBreakables && equal(szClass, "func_breakable")) {
 		engfunc(EngFunc_RemoveEntity, ent);
-		return 4;
+		return FMRES_SUPERCEDE;
 	}
 
-	return 1;
+	return FMRES_IGNORED;
 }
 
 public msgStatusIcon(msgid, msgdest, id) {

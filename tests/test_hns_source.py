@@ -70,7 +70,7 @@ class HnsSourceRegressionTests(unittest.TestCase):
 
   def test_play_only_restores_afk_spectators_to_playable_team(self):
     body = function_body("fnSayPlay")
-    guard = "if(get_user_team(id) != 3 || !fnIsPlayableTeam(g_aIsAfkTeam[id]))"
+    guard = "if(cs_get_user_team(id) != CS_TEAM_SPECTATOR || !fnIsPlayableTeam(g_aIsAfkTeam[id]))"
     team_change = "cs_set_user_team(id, g_aIsAfkTeam[id]);"
 
     self.assertIn("bool:fnIsPlayableTeam", SOURCE)
@@ -91,7 +91,7 @@ class HnsSourceRegressionTests(unittest.TestCase):
 
     self.assertNotIn("AUTOHEAL_TASKID", SOURCE)
     self.assertNotIn("REVIVE_TASKID", SOURCE)
-    self.assertIn("fnRemovePlayerTasks(id);", function_body("client_disconnect"))
+    self.assertIn("fnRemovePlayerTasks(id);", function_body("client_disconnected"))
     self.assertIn("fnRemoveRoundTasks(i);", function_body("fnRoundEnd"))
     self.assertIn(
       'set_task(0.1, "taskGiveWeapons", TASK_GIVE_WEAPONS + id);',
@@ -142,7 +142,8 @@ class HnsSourceRegressionTests(unittest.TestCase):
       function_body("fnRoundBeforeFreezeTime"),
     )
     reset_body = function_body("fnResetFlashbangRoundState")
-    self.assertIn("g_iFlasher = g_iFlasherTeam = 0;", reset_body)
+    self.assertIn("g_iFlasher = 0;", reset_body)
+    self.assertIn("g_iFlasherTeam = CS_TEAM_UNASSIGNED;", reset_body)
     self.assertIn("g_bFlashFailed = false;", reset_body)
 
   def test_flash_failure_notification_mode_is_configurable_and_sent_once(self):
@@ -212,8 +213,8 @@ class HnsSourceRegressionTests(unittest.TestCase):
     self.assertIn("precache_sound(g_szSeekersWinSound);", win_precache_body)
 
     round_end_body = function_body("fnRoundEnd")
-    self.assertIn("fnPlayWinSound(1);", round_end_body)
-    self.assertIn("fnPlayWinSound(2);", round_end_body)
+    self.assertIn("fnPlayWinSound(CS_TEAM_T);", round_end_body)
+    self.assertIn("fnPlayWinSound(CS_TEAM_CT);", round_end_body)
 
     play_body = function_body("fnPlayWinSound")
     self.assertIn("g_iCvarWinSoundMode", play_body)
@@ -236,9 +237,9 @@ class HnsSourceRegressionTests(unittest.TestCase):
       self.assertNotIn(stale_text, LANG)
 
   def test_countdown_sound_preference_is_initialized_per_connection(self):
-    self.assertIn("new bool:g_aCountdownSound[33];", SOURCE)
+    self.assertIn("new bool:g_aCountdownSound[MAX_PLAYERS + 1];", SOURCE)
     self.assertIn("g_aCountdownSound[id] = true;", function_body("client_connect"))
-    self.assertIn("g_aCountdownSound[id] = false;", function_body("client_disconnect"))
+    self.assertIn("g_aCountdownSound[id] = false;", function_body("client_disconnected"))
 
   def test_afk_saved_team_follows_role_swaps(self):
     body = function_body("fnSwapTeams")
@@ -246,8 +247,8 @@ class HnsSourceRegressionTests(unittest.TestCase):
     active_team_swap = "switch(iUserTeam)"
 
     self.assertIn(saved_team_swap, body)
-    self.assertIn("case 1: g_aIsAfkTeam[aPlayers[i]] = 2;", body)
-    self.assertIn("case 2: g_aIsAfkTeam[aPlayers[i]] = 1;", body)
+    self.assertIn("case CS_TEAM_T: g_aIsAfkTeam[aPlayers[i]] = CS_TEAM_CT;", body)
+    self.assertIn("case CS_TEAM_CT: g_aIsAfkTeam[aPlayers[i]] = CS_TEAM_T;", body)
     self.assertLess(body.index(saved_team_swap), body.index(active_team_swap))
     self.assertNotIn("if(g_aIsAfkTeam[aPlayers[i]] != 0)", body)
     self.assertNotIn("Проверить g_aCountdownSound", SOURCE)
@@ -257,7 +258,7 @@ class HnsSourceRegressionTests(unittest.TestCase):
     flash_guard = "if(!fnIsFlashScreenFade()"
     countdown_guard = (
       "if(g_iTimer && g_iCvarTimerAntiflashCt == 1 "
-      "&& get_user_team(msgEnt) == 2)"
+      "&& cs_get_user_team(msgEnt) == CS_TEAM_CT)"
     )
 
     self.assertIn(flash_guard, body)
@@ -426,6 +427,67 @@ class HnsSourceRegressionTests(unittest.TestCase):
         rf'\.has_min\s*=\s*true[^;]*\.min_val\s*=\s*0\.0[^;]*;'
       )
       self.assertRegex(SOURCE, call_pattern, name)
+
+  def test_lifecycle_events_helpers_and_constants_use_amxx10_api(self):
+    self.assertNotRegex(ROOT_SOURCE, r"\bpublic\s+client_disconnect\s*\(")
+    disconnect_body = function_body("client_disconnected")
+    self.assertIn("fnRemovePlayerTasks(id);", disconnect_body)
+    self.assertLess(
+      disconnect_body.index("fnRemovePlayerTasks(id);"),
+      disconnect_body.index("g_bConnected[id] = false;"),
+    )
+
+    self.assertIn("user_silentkill(id);", function_body("fnSayAfk"))
+    self.assertNotIn("fnUserSilentKill", SOURCE)
+
+    init_body = function_body("plugin_init")
+    self.assertIn(
+      'register_event_ex("HLTV", "fnRoundBeforeFreezeTime", RegisterEvent_Global, "1=0", "2=0");',
+      init_body,
+    )
+    self.assertIn(
+      'register_event_ex("DeathMsg", "fnDeath", RegisterEvent_Global);',
+      init_body,
+    )
+    self.assertIn(
+      'register_event_ex("CurWeapon", "fnTakeKnife", RegisterEvent_Single | RegisterEvent_OnlyAlive, "1=1", "2=29");',
+      init_body,
+    )
+    self.assertNotIn("register_event(", ROOT_SOURCE)
+
+    self.assertIsNone(
+      re.search(r"get_user_team\([^)]*\)\s*(?:==|!=)\s*[123]", SOURCE)
+    )
+    self.assertIsNone(
+      re.search(r"cs_set_user_team\([^,]+,\s*[123]\s*\)", SOURCE)
+    )
+    for team_constant in (
+      "CS_TEAM_UNASSIGNED",
+      "CS_TEAM_T",
+      "CS_TEAM_CT",
+      "CS_TEAM_SPECTATOR",
+    ):
+      self.assertIn(team_constant, SOURCE)
+
+    for forward_name in ("fwdEntitySpawn", "fwdEmitSound", "fwdCmdStart"):
+      body = function_body(forward_name)
+      self.assertNotRegex(body, r"\breturn\s+[014];")
+      self.assertRegex(body, r"FMRES_(?:IGNORED|HANDLED|SUPERCEDE)")
+
+    self.assertIn("new g_iScreenFadeMessageId;", SOURCE)
+    self.assertEqual(1, SOURCE.count('get_user_msgid("ScreenFade")'))
+    self.assertIn(
+      'g_iScreenFadeMessageId = get_user_msgid("ScreenFade");',
+      init_body,
+    )
+    self.assertIn(
+      'register_message(g_iScreenFadeMessageId, "msgScreenFade");',
+      init_body,
+    )
+    self.assertIn(
+      "message_begin(MSG_ONE, g_iScreenFadeMessageId, _, id);",
+      function_body("fnMakeScreenFade"),
+    )
 
   def test_countdown_and_fall_fades_have_independent_config_keys(self):
     expected_values = {

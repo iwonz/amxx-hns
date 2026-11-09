@@ -6,12 +6,13 @@
 new const FLASHBANG_MODEL[] = "models/w_flashbang.mdl";
 
 new g_iFlasher;
-new g_iFlasherTeam;
+new CsTeams:g_iFlasherTeam;
 new bool:g_bFlashFailed;
 new bool:g_bFlashbangEntity[MAX_TRACKED_ENTITIES];
 
 fnResetFlashbangRoundState() {
-	g_iFlasher = g_iFlasherTeam = 0;
+	g_iFlasher = 0;
+	g_iFlasherTeam = CS_TEAM_UNASSIGNED;
 	g_bFlashFailed = false;
 }
 
@@ -44,10 +45,10 @@ fnPrepareFlashbang(ent) {
 
 	if(is_user_connected(iOwner)) {
 		g_iFlasher = iOwner;
-		g_iFlasherTeam = get_user_team(iOwner);
+		g_iFlasherTeam = cs_get_user_team(iOwner);
 	} else {
 		g_iFlasher = 0;
-		g_iFlasherTeam = 0;
+		g_iFlasherTeam = CS_TEAM_UNASSIGNED;
 	}
 
 	g_bFlashFailed = g_iCvarFlashbangFailureChance > 0 && random_num(1, 100) <= g_iCvarFlashbangFailureChance;
@@ -76,13 +77,13 @@ public msgScreenFade(msgId, msgDest, msgEnt) {
 	if(g_bFlashFailed)
 		return PLUGIN_HANDLED;
 
-	if(g_iTimer && g_iCvarTimerAntiflashCt == 1 && get_user_team(msgEnt) == 2)
+	if(g_iTimer && g_iCvarTimerAntiflashCt == 1 && cs_get_user_team(msgEnt) == CS_TEAM_CT)
 		return PLUGIN_HANDLED;
 
 	if(g_iFlasher == msgEnt && g_iCvarFlashFlasher == 0)
 		return PLUGIN_HANDLED;
 
-	if(g_iFlasherTeam == get_user_team(msgEnt) && g_iCvarFlashTeammate == 0)
+	if(g_iFlasherTeam == cs_get_user_team(msgEnt) && g_iCvarFlashTeammate == 0)
 		return PLUGIN_HANDLED;
 
 	return PLUGIN_CONTINUE;

@@ -4,9 +4,10 @@
 #define _hns_ui_included
 
 new g_SyncHud;
+new g_iScreenFadeMessageId;
 
 fnMakeScreenFade(id, r = 0, g = 0, b = 0, alpha = 100, fade = 0) {
-	message_begin(MSG_ONE, get_user_msgid("ScreenFade"), _, id);
+	message_begin(MSG_ONE, g_iScreenFadeMessageId, _, id);
 	write_short(2048 * fade); // 2048 = 0.5 сек.
 	write_short(2048 * fade);
 	write_short(0x0000);

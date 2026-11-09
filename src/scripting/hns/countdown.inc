@@ -44,7 +44,7 @@ public fnDeath() {
 
 public fnRevive(iTaskID) {
 	new iUserID = iTaskID - TASK_REVIVE;
-	new iUserTeam = get_user_team(iUserID);
+	new CsTeams:iUserTeam = cs_get_user_team(iUserID);
 
 	if(
 		g_bConnected[iUserID] &&
@@ -76,13 +76,13 @@ public fnRoundAfterFreezeTime() {
 }
 
 public fnTimer(ent) {
-	new aPlayers[32], iPlayersCount, i;
+	new aPlayers[MAX_PLAYERS], iPlayersCount, i;
 	get_players(aPlayers, iPlayersCount, "ch");
 
 	if(g_iTimer > 0) {
 		for(i = 0; i < iPlayersCount; i++) {
 			if(g_bConnected[aPlayers[i]] && !is_user_bot(aPlayers[i]) && !is_user_hltv(aPlayers[i])) {
-				if(get_user_team(aPlayers[i]) == 2) {
+				if(cs_get_user_team(aPlayers[i]) == CS_TEAM_CT) {
 					set_pev(aPlayers[i], pev_flags, pev(aPlayers[i], pev_flags) | FL_FROZEN);
 
 					if(g_iCvarCtTimerFadeScreen == 1) {
@@ -126,7 +126,7 @@ fnEndCountdown(bool:bShowStartMessage) {
 	g_bCountdownActive = false;
 	set_pev(g_TimerEntity, pev_nextthink, 0.0);
 
-	new aPlayers[32], iPlayersCount;
+	new aPlayers[MAX_PLAYERS], iPlayersCount;
 	get_players(aPlayers, iPlayersCount, "ch");
 
 	for(new i = 0; i < iPlayersCount; i++) {
@@ -137,7 +137,7 @@ fnEndCountdown(bool:bShowStartMessage) {
 			show_dhudmessage(aPlayers[i], "%L", aPlayers[i], "HNS_ROUND_START");
 		}
 
-		if(get_user_team(aPlayers[i]) == 2) {
+		if(cs_get_user_team(aPlayers[i]) == CS_TEAM_CT) {
 			set_pev(aPlayers[i], pev_flags, pev(aPlayers[i], pev_flags) & ~FL_FROZEN);
 			fnMakeScreenFade(aPlayers[i], 0, 0, 0, 255, 0);
 		}

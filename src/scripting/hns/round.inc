@@ -36,7 +36,7 @@ public msgBlockWINSendAudio(msg_id, msg_dest, msg_entity) {
 public fnRoundEnd() {
 	fnStopCountdown();
 
-	for(new i = 1; i <= 32; i++)
+	for(new i = 1; i <= MaxClients; i++)
 		fnRemoveRoundTasks(i);
 
 	if(!g_bStart)
@@ -45,14 +45,14 @@ public fnRoundEnd() {
 	switch(fnTRAlive()) {
 		// Terrorist(s) alive, e.g hiders win
 		case true: {
-			fnPlayWinSound(1);
+			fnPlayWinSound(CS_TEAM_T);
 			fnShowRoundWinMessage("HNS_HIDERS_WIN", 255, 0, 0);
 		}
 
 		// No terrorist(s) alive, e.g seekers win
 		case false: {
 			set_task(0.1, "fnSwapTeams");
-			fnPlayWinSound(2);
+			fnPlayWinSound(CS_TEAM_CT);
 			fnShowRoundWinMessage("HNS_SEEKERS_WIN", 0, 0, 255);
 		}
 	}
@@ -62,7 +62,7 @@ public fnRoundEnd() {
 }
 
 fnShowRoundWinMessage(const szKey[], iRed, iGreen, iBlue) {
-	new aPlayers[32], iPlayersCount;
+	new aPlayers[MAX_PLAYERS], iPlayersCount;
 	get_players(aPlayers, iPlayersCount, "ch");
 
 	for(new i = 0; i < iPlayersCount; i++) {
@@ -72,15 +72,15 @@ fnShowRoundWinMessage(const szKey[], iRed, iGreen, iBlue) {
 	}
 }
 
-fnPlayWinSound(iWinner) {
-	if(g_iCvarWinSoundMode != 3 && g_iCvarWinSoundMode != iWinner)
+fnPlayWinSound(CsTeams:iWinner) {
+	if(g_iCvarWinSoundMode != 3 && g_iCvarWinSoundMode != _:iWinner)
 		return;
 
 	new szSound[MAX_SOUND_PATH_LENGTH + 1];
 
 	switch(iWinner) {
-		case 1: copy(szSound, charsmax(szSound), g_szHidersWinSound);
-		case 2: copy(szSound, charsmax(szSound), g_szSeekersWinSound);
+		case CS_TEAM_T: copy(szSound, charsmax(szSound), g_szHidersWinSound);
+		case CS_TEAM_CT: copy(szSound, charsmax(szSound), g_szSeekersWinSound);
 	}
 
 	if(szSound[0])
@@ -127,11 +127,11 @@ fnPrecacheWinSounds() {
 }
 
 bool:fnTRAlive() {
-	new aPlayers[32], iPlayersCount, i;
+	new aPlayers[MAX_PLAYERS], iPlayersCount, i;
 	get_players(aPlayers, iPlayersCount, "ch");
 
 	for(i = 0; i < iPlayersCount; i++)
-		if(is_user_alive(aPlayers[i]) && get_user_team(aPlayers[i]) == 1)
+		if(is_user_alive(aPlayers[i]) && cs_get_user_team(aPlayers[i]) == CS_TEAM_T)
 			return true;
 
 	return false;

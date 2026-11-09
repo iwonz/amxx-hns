@@ -4,7 +4,7 @@
 #define _hns_equipment_included
 
 public fnTakeKnife(id) {
-	if(g_iCvarTrFakeKnifeMode == 2 && get_user_team(id) == 1) {
+	if(g_iCvarTrFakeKnifeMode == 2 && cs_get_user_team(id) == CS_TEAM_T) {
 		set_pev(id, pev_viewmodel2, "");
 		set_pev(id, pev_weaponmodel2, "");
 	}
@@ -20,12 +20,12 @@ public fnPlayerSpawnAfter(id) {
 public fwdEmitSound(id, channel, const szSound[]) {
 	if(
 		(g_iCvarTrFakeKnifeMode == 1 || g_iCvarTrFakeKnifeMode == 2) &&
-		get_user_team(id) == 1 &&
+		get_user_team(id) == _:CS_TEAM_T &&
 		equal(szSound, "weapons/knife_deploy1.wav")
 	)
-		return 4;
+		return FMRES_SUPERCEDE;
 
-	return 1;
+	return FMRES_IGNORED;
 }
 public fwdCmdStart(id, handle) {
 	if(!is_user_alive(id))
@@ -34,7 +34,7 @@ public fwdCmdStart(id, handle) {
 	if(get_user_weapon(id) != CSW_KNIFE)
 		return FMRES_IGNORED;
 
-	if(get_user_team(id) != 1 || (g_iCvarTrFakeKnifeMode != 1 && g_iCvarTrFakeKnifeMode != 2))
+	if(cs_get_user_team(id) != CS_TEAM_T || (g_iCvarTrFakeKnifeMode != 1 && g_iCvarTrFakeKnifeMode != 2))
 		return FMRES_IGNORED;
 
 	new iButtons = get_uc(handle, UC_Buttons);
@@ -57,7 +57,7 @@ public taskGiveWeapons(iTaskID) {
 
 	give_item(id, "weapon_knife");
 
-	new iUserTeam = get_user_team(id);
+	new iUserTeam = _:cs_get_user_team(id);
 
 	if(g_iCvarHegrenadeMode == iUserTeam || g_iCvarHegrenadeMode == 3)
 		give_item(id, "weapon_hegrenade");

@@ -9,18 +9,18 @@ public fnSayAfk(id) {
 		return PLUGIN_HANDLED;
 	}
 
-	new iUserTeam = get_user_team(id);
+	new CsTeams:iUserTeam = cs_get_user_team(id);
 
-	if(iUserTeam == 3) {
+	if(iUserTeam == CS_TEAM_SPECTATOR) {
 		ChatColorKey(id, "HNS_ALREADY_SPECTATOR");
 		ChatColorKey(id, "HNS_RETURN_TO_GAME_HINT");
 		return PLUGIN_HANDLED;
 	}
 
 	if(is_user_alive(id))
-		fnUserSilentKill(id);
+		user_silentkill(id);
 
-	cs_set_user_team(id, 3);
+	cs_set_user_team(id, CS_TEAM_SPECTATOR);
 
 	ChatColorKey(id, "HNS_MOVED_TO_SPECTATOR");
 	ChatColorKey(id, "HNS_RETURN_TO_GAME_HINT");
@@ -36,7 +36,7 @@ public fnSayPlay(id) {
 		return PLUGIN_HANDLED;
 	}
 
-	if(get_user_team(id) != 3 || !fnIsPlayableTeam(g_aIsAfkTeam[id])) {
+	if(cs_get_user_team(id) != CS_TEAM_SPECTATOR || !fnIsPlayableTeam(g_aIsAfkTeam[id])) {
 		ChatColorKey(id, "HNS_CANNOT_RETURN_TO_GAME");
 		return PLUGIN_HANDLED;
 	}
@@ -50,13 +50,13 @@ public fnSayPlay(id) {
 
 	ChatColorKey(id, "HNS_RETURNED_TO_GAME");
 
-	g_aIsAfkTeam[id] = 0;
+	g_aIsAfkTeam[id] = CS_TEAM_UNASSIGNED;
 
 	return PLUGIN_HANDLED;
 }
 
-bool:fnIsPlayableTeam(iTeam) {
-	return iTeam == 1 || iTeam == 2;
+bool:fnIsPlayableTeam(CsTeams:iTeam) {
+	return iTeam == CS_TEAM_T || iTeam == CS_TEAM_CT;
 }
 
 public fnAfkControlRevive(iTaskID) {
@@ -67,7 +67,7 @@ public fnAfkControlRevive(iTaskID) {
 		g_bStart &&
 		g_iTimer > 0 &&
 		!is_user_alive(id) &&
-		fnIsPlayableTeam(get_user_team(id))
+		fnIsPlayableTeam(cs_get_user_team(id))
 	)
 		ExecuteHamB(Ham_CS_RoundRespawn, id);
 }
@@ -102,7 +102,7 @@ bool:fnBeAutojoin(id) {
 
 	return (
 		g_iCvarAutojoin == 1 &&
-		!get_user_team(id) &&
+		cs_get_user_team(id) == CS_TEAM_UNASSIGNED &&
 		!task_exists(TASK_FORCE_JOIN + id) &&
 		(g_iCvarAutojoinImmunity == 0 || !(get_user_flags(id) & iImmunityFlag))
 	);
@@ -118,7 +118,7 @@ fnForceTeamJoinTask(id, menu_msgid) {
 public fnForceTeamJoin(menu_msgid[], iTaskID) {
 	new id = iTaskID - TASK_FORCE_JOIN;
 
-	if(!g_bConnected[id] || get_user_team(id))
+	if(!g_bConnected[id] || cs_get_user_team(id) != CS_TEAM_UNASSIGNED)
 		return;
 
 	fnJinTeam(id, menu_msgid[0], "5", "5");
@@ -141,23 +141,23 @@ stock fnJinTeam(id, menu_msgid, /* const */ team[] = "5", /* const */ class[] = 
 }
 
 public fnSwapTeams() {
-	new aPlayers[32], iPlayersCount, i;
+	new aPlayers[MAX_PLAYERS], iPlayersCount, i;
 	get_players(aPlayers, iPlayersCount, "ch");
 
 	for(i = 0; i < iPlayersCount; i++) {
 		if(!g_bConnected[aPlayers[i]])
 			continue;
 
-		new iUserTeam = get_user_team(aPlayers[i]);
+		new CsTeams:iUserTeam = cs_get_user_team(aPlayers[i]);
 
 		switch(g_aIsAfkTeam[aPlayers[i]]) {
-			case 1: g_aIsAfkTeam[aPlayers[i]] = 2;
-			case 2: g_aIsAfkTeam[aPlayers[i]] = 1;
+			case CS_TEAM_T: g_aIsAfkTeam[aPlayers[i]] = CS_TEAM_CT;
+			case CS_TEAM_CT: g_aIsAfkTeam[aPlayers[i]] = CS_TEAM_T;
 		}
 
 		switch(iUserTeam) {
-			case 1: cs_set_user_team(aPlayers[i], 2);
-			case 2: cs_set_user_team(aPlayers[i], 1);
+			case CS_TEAM_T: cs_set_user_team(aPlayers[i], CS_TEAM_CT);
+			case CS_TEAM_CT: cs_set_user_team(aPlayers[i], CS_TEAM_T);
 		}
 	}
 }
@@ -171,7 +171,7 @@ public fnJoinTeam(id) {
 }
 
 fnHandleTeamChange(id) {
-	if(get_user_team(id) == 3) {
+	if(cs_get_user_team(id) == CS_TEAM_SPECTATOR) {
 		if(!g_aIsAfkTeam[id])
 			return PLUGIN_CONTINUE;
 		else {
@@ -194,31 +194,16 @@ fnHandleTeamChange(id) {
 }
 
 public fnGetPlayers(&tr, &ct) {
-	new aPlayers[32], iPlayersCount, i;
+	new aPlayers[MAX_PLAYERS], iPlayersCount, i;
 	get_players(aPlayers, iPlayersCount, "ch");
 
 	for(i = 0; i < iPlayersCount; i++) {
 		if(!g_bConnected[aPlayers[i]])
 			continue;
 
-		switch(get_user_team(aPlayers[i])) {
-			case 1: tr++;
-			case 2: ct++;
+		switch(cs_get_user_team(aPlayers[i])) {
+			case CS_TEAM_T: tr++;
+			case CS_TEAM_CT: ct++;
 		}
 	}
-}
-
-stock fnUserSilentKill(id) {
-	static msgid = 0;
-	new msgblock;
-
-	if(!msgid)
-		msgid = get_user_msgid("DeathMsg");
-
-	msgblock = get_msg_block(msgid);
-	set_msg_block(msgid, BLOCK_ONCE);
-	user_kill(id, 1);
-	set_msg_block(msgid, msgblock);
-
-	return 1;
 }

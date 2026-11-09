@@ -118,13 +118,13 @@ public plugin_init() {
 	bind_pcvar_num(pCvar, g_iCvarTrFakeKnifeMode);
 
 	// EVENTS
-	register_event("HLTV", "fnRoundBeforeFreezeTime", "a", "1=0", "2=0");
+	register_event_ex("HLTV", "fnRoundBeforeFreezeTime", RegisterEvent_Global, "1=0", "2=0");
 	register_logevent("fnRoundAfterFreezeTime", 2, "0=World triggered", "1=Round_Start");
 	register_logevent("fnRoundEnd", 2, "0=World triggered", "1=Round_Draw", "1=Round_End");
 
-	register_event("DeathMsg", "fnDeath", "a");
+	register_event_ex("DeathMsg", "fnDeath", RegisterEvent_Global);
 
-	register_event("CurWeapon", "fnTakeKnife", "be", "1=1", "2=29");
+	register_event_ex("CurWeapon", "fnTakeKnife", RegisterEvent_Single | RegisterEvent_OnlyAlive, "1=1", "2=29");
 
 	RegisterHam(Ham_Spawn, "player", "fnPlayerSpawnAfter", 1);
 	RegisterHam(Ham_TakeDamage, "player", "fnTakeDamage");
@@ -135,7 +135,8 @@ public plugin_init() {
 
 	register_message(get_user_msgid("StatusIcon"), "msgStatusIcon");
 
-	register_message(get_user_msgid("ScreenFade"), "msgScreenFade");
+	g_iScreenFadeMessageId = get_user_msgid("ScreenFade");
+	register_message(g_iScreenFadeMessageId, "msgScreenFade");
 
 	register_message(get_user_msgid("ShowMenu"), "msgShowMenu");
 	register_message(get_user_msgid("VGUIMenu"), "msgVguiMenu");
@@ -181,15 +182,15 @@ public plugin_cfg() {
 public client_connect(id) {
 	g_bConnected[id] = true;
 	g_aCountdownSound[id] = true;
-	g_aIsAfkTeam[id] = 0;
+	g_aIsAfkTeam[id] = CS_TEAM_UNASSIGNED;
 }
 
-public client_disconnect(id) {
+public client_disconnected(id, bool:drop, message[], maxlen) {
 	fnRemovePlayerTasks(id);
 
 	g_bConnected[id] = false;
 	g_aCountdownSound[id] = false;
-	g_aIsAfkTeam[id] = 0;
+	g_aIsAfkTeam[id] = CS_TEAM_UNASSIGNED;
 }
 
 fnRemoveRoundTasks(id) {

@@ -20,9 +20,9 @@
 
 ## 4. Обновить lifecycle, события и штатные helpers
 
-- [ ] 4.1 Добавить regression tests на `client_disconnected`, штатный `user_silentkill`, `register_event_ex`, именованные team/Fakemeta constants и кешированный `ScreenFade` id; запустить `python3 -B -m unittest discover -s tests -v` и подтвердить ожидаемое падение
-- [ ] 4.2 Реализовать lifecycle/helper/event/constants-миграцию с прежними task cleanup paths, обновить README и существующие tests, завязанные на `client_disconnect`
-- [ ] 4.3 Проверить зелёный `python3 -B -m unittest discover -s tests -v`, выполнить AMXX 1.10 docker-компиляцию из пункта 2.3 и зафиксировать изменение коммитом `Update AMXX lifecycle and helper APIs` после `git diff --check`
+- [x] 4.1 Добавить regression tests на `client_disconnected`, штатный `user_silentkill`, `register_event_ex`, именованные team/Fakemeta constants и кешированный `ScreenFade` id; запустить `python3 -B -m unittest discover -s tests -v` и подтвердить ожидаемое падение
+- [x] 4.2 Реализовать lifecycle/helper/event/constants-миграцию с прежними task cleanup paths, обновить README и существующие tests, завязанные на `client_disconnect`
+- [x] 4.3 Проверить зелёный `python3 -B -m unittest discover -s tests -v`, выполнить AMXX 1.10 docker-компиляцию из пункта 2.3 и зафиксировать изменение коммитом `Update AMXX lifecycle and helper APIs` после `git diff --check`
 
 ## 5. Сохранить стандартный fall-damage pipeline
 
