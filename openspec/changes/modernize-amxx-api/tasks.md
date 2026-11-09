@@ -38,7 +38,7 @@
 
 ## 7. Интеграционная проверка
 
-- [ ] 7.1 Запустить `python3 -B -m unittest discover -s tests -v`, `npx --yes @fission-ai/openspec@1.14.2 validate --all --strict`, `iconv -f CP1251 -t UTF-8 src/configs/hns.cfg >/dev/null`, `git diff --check` и AMXX 1.10 docker-компиляцию из пункта 2.3; подтвердить отсутствие незакоммиченных продуктовых изменений и перечислить фактические коммиты
+- [x] 7.1 Запустить `python3 -B -m unittest discover -s tests -v`, `npx --yes @fission-ai/openspec@1.14.2 validate --all --strict`, `iconv -f CP1251 -t UTF-8 src/configs/hns.cfg >/dev/null`, `git diff --check` и AMXX 1.10 docker-компиляцию из пункта 2.3; подтвердить отсутствие незакоммиченных продуктовых изменений и перечислить фактические коммиты
 
 ## Workflow follow-up
 
