@@ -321,7 +321,7 @@ class ReleaseVersioningTests(unittest.TestCase):
       'python3 scripts/release.py verify-tag --tag "$GITHUB_REF_NAME"',
       "python3 -B -m unittest discover -s tests -v",
       "npx --yes @fission-ai/openspec@1.14.2 validate --all --strict",
-      "git diff --check",
+      "git diff-tree --check --no-commit-id --root -r HEAD",
       "amxxpc",
       "python3 scripts/release.py package",
       "if-no-files-found: error",

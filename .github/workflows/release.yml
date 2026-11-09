@@ -44,7 +44,7 @@ jobs:
         run: npx --yes @fission-ai/openspec@1.14.2 validate --all --strict
 
       - name: Check whitespace
-        run: git diff --check
+        run: git diff-tree --check --no-commit-id --root -r HEAD
 
       - name: Install 32-bit compiler runtime
         run: |
