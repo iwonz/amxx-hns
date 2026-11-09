@@ -10,6 +10,7 @@
 #define AUTHOR "foxmits"
 
 #include "hns/definitions.inc"
+#include "hns/player_state.inc"
 
 new const FLASHBANG_MODEL[] = "models/w_flashbang.mdl";
 new g_szHidersWinSound[MAX_SOUND_PATH_LENGTH + 1] = "radio/terwin.wav";
@@ -18,17 +19,12 @@ new g_szSeekersWinSound[MAX_SOUND_PATH_LENGTH + 1] = "radio/ctwin.wav";
 new bool:g_bStart = false;
 new bool:g_bCountdownActive = false;
 
-new bool:g_bConnected[33];
-
 new g_SyncHud;
 
 new g_iFlasher;
 new g_iFlasherTeam;
 new bool:g_bFlashFailed;
 new bool:g_bFlashbangEntity[MAX_TRACKED_ENTITIES];
-
-new bool:g_aCountdownSound[33];
-new g_aIsAfkTeam[33] = 0;
 
 new g_iTimer = 0;
 
