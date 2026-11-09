@@ -18,7 +18,7 @@ docker run --rm --platform linux/386 -v "$PWD":/workspace -v /private/tmp/amxx-r
 
 - [x] 2.1 Извлечь общие константы, task ID, Cvar enum и handles в guarded `hns/definitions.inc`, не меняя значения или порядок enum; выполнить обязательную проверку Pawn-шагов и оформить отдельный коммит.
 - [x] 2.2 Извлечь slot-scoped массивы состояния в guarded `hns/player_state.inc`, сохранив прежнюю инициализацию/cleanup в `client_connect` и `client_disconnect`; выполнить обязательную проверку Pawn-шагов и оформить отдельный коммит.
-- [ ] 2.3 Извлечь HUD/chat/ScreenFade helpers и HUD sync state в guarded `hns/ui.inc` без изменения message payload и локализации; выполнить обязательную проверку Pawn-шагов и оформить отдельный коммит.
+- [x] 2.3 Извлечь HUD/chat/ScreenFade helpers и HUD sync state в guarded `hns/ui.inc` без изменения message payload и локализации; выполнить обязательную проверку Pawn-шагов и оформить отдельный коммит.
 
 ## 3. Leaf gameplay modules
 

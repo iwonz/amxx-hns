@@ -11,6 +11,7 @@
 
 #include "hns/definitions.inc"
 #include "hns/player_state.inc"
+#include "hns/ui.inc"
 
 new const FLASHBANG_MODEL[] = "models/w_flashbang.mdl";
 new g_szHidersWinSound[MAX_SOUND_PATH_LENGTH + 1] = "radio/terwin.wav";
@@ -18,8 +19,6 @@ new g_szSeekersWinSound[MAX_SOUND_PATH_LENGTH + 1] = "radio/ctwin.wav";
 
 new bool:g_bStart = false;
 new bool:g_bCountdownActive = false;
-
-new g_SyncHud;
 
 new g_iFlasher;
 new g_iFlasherTeam;
@@ -751,7 +750,6 @@ public fwdEmitSound(id, channel, const szSound[]) {
 
 	return 1;
 }
-
 public fwdCmdStart(id, handle) {
 	if(!is_user_alive(id))
 		return FMRES_IGNORED;
@@ -804,18 +802,6 @@ public taskGiveWeapons(iTaskID) {
 
 	if(cvarSmokegrenadeMode == iUserTeam || cvarSmokegrenadeMode == 3)
 		give_item(id, "weapon_smokegrenade");
-}
-
-fnMakeScreenFade(id, r = 0, g = 0, b = 0, alpha = 100, fade = 0) {
-	message_begin(MSG_ONE, get_user_msgid("ScreenFade"), _, id);
-	write_short(2048 * fade); // 2048 = 0.5 сек.
-	write_short(2048 * fade);
-	write_short(0x0000);
-	write_byte(r);
-	write_byte(g);
-	write_byte(b);
-	write_byte(alpha);
-	message_end();
 }
 
 public plugin_precache() {
@@ -1004,37 +990,6 @@ bool:fnTRAlive() {
 	return false;
 }
 
-stock ChatColorKey(id, const szKey[]) {
-	new szMessage[190];
-	formatex(szMessage, charsmax(szMessage), "%L %L", id, "HNS_CHAT_PREFIX", id, szKey);
-
-	replace_all(szMessage, charsmax(szMessage), "!n", "^1");
-	replace_all(szMessage, charsmax(szMessage), "!t", "^3");
-	replace_all(szMessage, charsmax(szMessage), "!g", "^4");
-
-	SendChatColor(id, szMessage);
-}
-
-stock SendChatColor(const id, const szMessage[]) {
-	static iPlayersCount, aPlayers[32], iMessageId;
-
-	if(!iMessageId)
-		iMessageId = get_user_msgid("SayText");
-
-	if(id) {
-		aPlayers[0] = id;
-		iPlayersCount = 1;
-	} else
-		get_players(aPlayers, iPlayersCount, "ch");
-
-	for(new i = 0; i < iPlayersCount; i++) {
-		message_begin(MSG_ONE, iMessageId, .player = aPlayers[i]);
-		write_byte(aPlayers[i]);
-		write_string(szMessage);
-		message_end();
-	}
-}
-
 stock fnUserSilentKill(id) {
 	static msgid = 0;
 	new msgblock;
@@ -1049,7 +1004,3 @@ stock fnUserSilentKill(id) {
 
 	return 1;
 }
-
-stock ClearDHUDMessages(id, iClear = 8)
-	for(new iDHUD = 0; iDHUD < iClear; iDHUD++)
-		show_dhudmessage(id, "");
