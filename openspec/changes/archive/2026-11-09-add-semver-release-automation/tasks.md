@@ -18,6 +18,7 @@
 - [x] 3.1 До workflow добавить падающие regression tests его контракта: tag-only trigger, read-only build job, отдельный `contents: write` publish job, concurrency, pinned official AMXX URLs/SHA-256, вызов локального helper, обязательные tests/OpenSpec/compile gates, передача неизменных artifacts и `gh release create --verify-tag --generate-notes`; подтвердить целевое падение `python3 -B -m unittest tests.test_release_versioning -v`.
 - [x] 3.2 Сначала добавить падающий regression test отсутствия legacy `#include <dhudmessage>`, затем удалить этот include и добавить `.github/workflows/release.yml` с закреплёнными commit SHA официальных GitHub Actions, build/publish jobs, AMX Mod X 1.10.0.5487 compilation и условной prerelease-публикацией; проверить workflow-тесты и прогнать локально все команды build job, не выполняя `gh release create`.
 - [x] 3.3 Зафиксировать workflow и его regression tests отдельным атомарным commit; проверить область изменений через `git show --stat --oneline HEAD`.
+- [x] 3.4 Добавить падающий regression test, запрещающий `${{ runner.* }}` в job-level `env`; перенести временные пути toolchain в shell-step через `$RUNNER_TEMP`, проверить workflow `actionlint 1.7.7`, убедиться через GitHub API, что он распознан под именем `Release`, и зафиксировать исправление отдельным commit до создания тега.
 
 ## 4. Документация и интеграция
 
