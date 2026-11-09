@@ -8,9 +8,9 @@
 
 ## 2. Перевести цветной чат на AMXX 1.10 API
 
-- [ ] 2.1 Добавить regression test на `client_print_color`, отсутствие ручного `SayText`/`replace_all` и штатные color codes в обоих языках; запустить `python3 -B -m unittest discover -s tests -v` и подтвердить ожидаемое падение
-- [ ] 2.2 Упростить `ChatColorKey`, удалить пользовательский chat transport и заменить `!n/!t/!g` на `^1/^3/^4` в RU/EN без изменения keys/placeholders; проверить зелёный `python3 -B -m unittest discover -s tests -v`
-- [ ] 2.3 Скомпилировать Pawn командой `docker run --rm --platform linux/386 -v "$PWD":/workspace -v /private/tmp/amxx-review.bHHaQa:/amxx -w /amxx/dist/addons/amxmodx/scripting i386/ubuntu:20.04 ./amxxpc /workspace/src/scripting/hns.sma -iinclude -o/tmp/hns.amxx` и зафиксировать изменение коммитом `Use native AMXX colored chat` после `git diff --check`
+- [x] 2.1 Добавить regression test на `client_print_color`, отсутствие ручного `SayText`/`replace_all` и штатные color codes в обоих языках; запустить `python3 -B -m unittest discover -s tests -v` и подтвердить ожидаемое падение
+- [x] 2.2 Упростить `ChatColorKey`, удалить пользовательский chat transport и заменить `!n/!t/!g` на `^1/^3/^4` в RU/EN без изменения keys/placeholders; проверить зелёный `python3 -B -m unittest discover -s tests -v`
+- [x] 2.3 Скомпилировать Pawn командой `docker run --rm --platform linux/386 -v "$PWD":/workspace -v /private/tmp/amxx-review.bHHaQa:/amxx -w /amxx/dist/addons/amxmodx/scripting i386/ubuntu:20.04 ./amxxpc /workspace/src/scripting/hns.sma -iinclude -o/tmp/hns.amxx` и зафиксировать изменение коммитом `Use native AMXX colored chat` после `git diff --check`
 
 ## 3. Перевести Cvar на create/bind API
 

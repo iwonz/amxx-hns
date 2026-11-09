@@ -305,6 +305,21 @@ class HnsSourceRegressionTests(unittest.TestCase):
     for key in expected_keys:
       self.assertIn(f'"{key}"', SOURCE)
 
+  def test_chat_uses_native_color_print_and_dictionary_codes(self):
+    body = function_body("ChatColorKey")
+
+    self.assertIn("client_print_color", body)
+    self.assertNotIn("replace_all", body)
+    self.assertNotIn("SendChatColor", SOURCE)
+    self.assertNotIn('get_user_msgid("SayText")', SOURCE)
+
+    russian, english = LANG.split("[en]", 1)
+    for dictionary in (russian, english):
+      for legacy_marker in ("!n", "!t", "!g"):
+        self.assertNotIn(legacy_marker, dictionary)
+      for native_code in ("^1", "^3", "^4"):
+        self.assertIn(native_code, dictionary)
+
   def test_alive_checks_use_engine_state_instead_of_cached_flags(self):
     self.assertNotIn("g_bAlive", SOURCE)
     self.assertIn("if(is_user_alive(id))", function_body("fnSayAfk"))

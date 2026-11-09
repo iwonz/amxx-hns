@@ -18,34 +18,7 @@ fnMakeScreenFade(id, r = 0, g = 0, b = 0, alpha = 100, fade = 0) {
 }
 
 stock ChatColorKey(id, const szKey[]) {
-	new szMessage[190];
-	formatex(szMessage, charsmax(szMessage), "%L %L", id, "HNS_CHAT_PREFIX", id, szKey);
-
-	replace_all(szMessage, charsmax(szMessage), "!n", "^1");
-	replace_all(szMessage, charsmax(szMessage), "!t", "^3");
-	replace_all(szMessage, charsmax(szMessage), "!g", "^4");
-
-	SendChatColor(id, szMessage);
-}
-
-stock SendChatColor(const id, const szMessage[]) {
-	static iPlayersCount, aPlayers[32], iMessageId;
-
-	if(!iMessageId)
-		iMessageId = get_user_msgid("SayText");
-
-	if(id) {
-		aPlayers[0] = id;
-		iPlayersCount = 1;
-	} else
-		get_players(aPlayers, iPlayersCount, "ch");
-
-	for(new i = 0; i < iPlayersCount; i++) {
-		message_begin(MSG_ONE, iMessageId, .player = aPlayers[i]);
-		write_byte(aPlayers[i]);
-		write_string(szMessage);
-		message_end();
-	}
+	client_print_color(id, id, "%L %L", id, "HNS_CHAT_PREFIX", id, szKey);
 }
 
 stock ClearDHUDMessages(id, iClear = 8)
