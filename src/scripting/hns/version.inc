@@ -3,4 +3,4 @@
 #endif
 #define _hns_version_included
 
-#define HNS_VERSION "1.0.0"
+#define HNS_VERSION "1.0.1"

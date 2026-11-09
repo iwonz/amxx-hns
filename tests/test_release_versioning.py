@@ -51,7 +51,7 @@ class ReleaseVersioningTests(unittest.TestCase):
     )
     hns_source = HNS_SOURCE.read_text(encoding="utf-8")
 
-    self.assertEqual(["1.0.0"], version_definitions)
+    self.assertEqual(["1.0.1"], version_definitions)
     self.assertIn('#include "hns/version.inc"', hns_source)
     self.assertIn("register_plugin(PLUGIN, HNS_VERSION, AUTHOR);", hns_source)
     self.assertNotRegex(hns_source, r'^\s*#define\s+VERSION\s+"',)
@@ -120,23 +120,10 @@ class ReleaseVersioningTests(unittest.TestCase):
     )
 
     self.assertEqual(0, result.returncode, result.stderr)
-    self.assertEqual("1.0.0", result.stdout.strip())
+    self.assertEqual("1.0.1", result.stdout.strip())
 
   def test_verify_tag_command_fails_closed_on_mismatch(self):
     matching = subprocess.run(
-      [
-        sys.executable,
-        str(RELEASE_SCRIPT),
-        "verify-tag",
-        "--tag",
-        "v1.0.0",
-      ],
-      cwd=ROOT,
-      capture_output=True,
-      text=True,
-      check=False,
-    )
-    mismatching = subprocess.run(
       [
         sys.executable,
         str(RELEASE_SCRIPT),
@@ -149,9 +136,22 @@ class ReleaseVersioningTests(unittest.TestCase):
       text=True,
       check=False,
     )
+    mismatching = subprocess.run(
+      [
+        sys.executable,
+        str(RELEASE_SCRIPT),
+        "verify-tag",
+        "--tag",
+        "v1.0.0",
+      ],
+      cwd=ROOT,
+      capture_output=True,
+      text=True,
+      check=False,
+    )
 
     self.assertEqual(0, matching.returncode, matching.stderr)
-    self.assertIn("version=1.0.0", matching.stdout)
+    self.assertIn("version=1.0.1", matching.stdout)
     self.assertIn("prerelease=false", matching.stdout)
     self.assertNotEqual(0, mismatching.returncode)
     self.assertIn("does not match", mismatching.stderr)
@@ -171,7 +171,7 @@ class ReleaseVersioningTests(unittest.TestCase):
 
       artifacts = package_release(plugin_path, output_dir, project_root=ROOT)
 
-      archive_path = output_dir / "hns-v1.0.0.zip"
+      archive_path = output_dir / "hns-v1.0.1.zip"
       standalone_path = output_dir / "hns.amxx"
       checksums_path = output_dir / "SHA256SUMS"
       self.assertEqual(archive_path, artifacts.archive)
@@ -266,7 +266,7 @@ class ReleaseVersioningTests(unittest.TestCase):
       )
 
       self.assertEqual(0, result.returncode, result.stderr)
-      self.assertTrue((output_dir / "hns-v1.0.0.zip").is_file())
+      self.assertTrue((output_dir / "hns-v1.0.1.zip").is_file())
       self.assertTrue((output_dir / "hns.amxx").is_file())
       self.assertTrue((output_dir / "SHA256SUMS").is_file())
 
