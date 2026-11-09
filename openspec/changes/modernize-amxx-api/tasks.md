@@ -2,9 +2,9 @@
 
 ## 1. Исправить поставляемую CT fade-конфигурацию
 
-- [ ] 1.1 Добавить regression test, требующий ровно по одной CT countdown и fall-down R/G/B/alpha строке с соответствующими значениями; запустить `python3 -B -m unittest discover -s tests -v` и подтвердить ожидаемое падение на текущем `hns.cfg`
-- [ ] 1.2 Переименовать четыре ошибочные строки CT-секции в CP1251 `src/configs/hns.cfg`, удалить описание известного расхождения из README, проверить `iconv -f CP1251 -t UTF-8 src/configs/hns.cfg >/dev/null` и зелёный `python3 -B -m unittest discover -s tests -v`
-- [ ] 1.3 Зафиксировать только config/test/README-изменения отдельным коммитом `Fix CT countdown fade configuration` после `git diff --check`
+- [x] 1.1 Добавить regression test, требующий ровно по одной CT countdown и fall-down R/G/B/alpha строке с соответствующими значениями; запустить `python3 -B -m unittest discover -s tests -v` и подтвердить ожидаемое падение на текущем `hns.cfg`
+- [x] 1.2 Переименовать четыре ошибочные строки CT-секции в CP1251 `src/configs/hns.cfg`, удалить описание известного расхождения из README, проверить `iconv -f CP1251 -t UTF-8 src/configs/hns.cfg >/dev/null` и зелёный `python3 -B -m unittest discover -s tests -v`
+- [x] 1.3 Зафиксировать только config/test/README-изменения отдельным коммитом `Fix CT countdown fade configuration` после `git diff --check`
 
 ## 2. Перевести цветной чат на AMXX 1.10 API
 

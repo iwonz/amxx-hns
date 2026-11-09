@@ -335,6 +335,29 @@ class HnsSourceRegressionTests(unittest.TestCase):
     self.assertIn("return PLUGIN_CONTINUE;", body)
     self.assertIn("return PLUGIN_HANDLED;", body)
 
+  def test_countdown_and_fall_fades_have_independent_config_keys(self):
+    expected_values = {
+      "hns_ct_timer_fade_screen_r": "0",
+      "hns_ct_timer_fade_screen_g": "0",
+      "hns_ct_timer_fade_screen_b": "0",
+      "hns_ct_timer_fade_screen_alpha": "150",
+      "hns_falldown_fadescreen_r": "255",
+      "hns_falldown_fadescreen_g": "0",
+      "hns_falldown_fadescreen_b": "0",
+      "hns_falldown_fadescreen_alpha": "80",
+    }
+
+    configured_values = {}
+    for raw_line in CONFIG.splitlines():
+      match = re.fullmatch(r'(hns_(?:ct_timer|falldown)_fade_?screen_[a-z]+)\s+"([^"]+)"', raw_line.strip())
+      if match:
+        configured_values.setdefault(match.group(1), []).append(match.group(2))
+
+    self.assertEqual(
+      {name: [value] for name, value in expected_values.items()},
+      configured_values,
+    )
+
 
 if __name__ == "__main__":
   unittest.main()
