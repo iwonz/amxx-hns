@@ -11,8 +11,8 @@ docker run --rm --platform linux/386 -v "$PWD":/workspace -v /private/tmp/amxx-r
 
 ## 1. Safety net
 
-- [ ] 1.1 Зафиксировать исходную зелёную точку командами `python3 -B -m unittest discover -s tests -v` и указанной выше компиляцией AMX Mod X 1.10, не продолжать рефакторинг при ошибке.
-- [ ] 1.2 Обновить `tests/test_hns_source.py` и `tests/test_project_docs.py`, чтобы `SOURCE` включал `hns.sma` и все `src/scripting/hns/*.inc`; добавить проверку подключения каждого найденного include в composition root и проверить task командой `python3 -B -m unittest discover -s tests -v`.
+- [x] 1.1 Зафиксировать исходную зелёную точку командами `python3 -B -m unittest discover -s tests -v` и указанной выше компиляцией AMX Mod X 1.10, не продолжать рефакторинг при ошибке.
+- [x] 1.2 Обновить `tests/test_hns_source.py` и `tests/test_project_docs.py`, чтобы `SOURCE` включал `hns.sma` и все `src/scripting/hns/*.inc`; добавить проверку подключения каждого найденного include в composition root и проверить task командой `python3 -B -m unittest discover -s tests -v`.
 
 ## 2. Shared source foundation
 

@@ -4,7 +4,12 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).parents[1]
-SOURCE = (ROOT / "src" / "scripting" / "hns.sma").read_text(encoding="utf-8")
+SCRIPTING_DIR = ROOT / "src" / "scripting"
+SOURCE_PATHS = [
+  SCRIPTING_DIR / "hns.sma",
+  *sorted((SCRIPTING_DIR / "hns").glob("*.inc")),
+]
+SOURCE = "\n".join(path.read_text(encoding="utf-8") for path in SOURCE_PATHS)
 README = (ROOT / "README.md").read_text(encoding="utf-8")
 AGENTS = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
 SPEC_FILES = sorted((ROOT / "openspec" / "specs").glob("*/spec.md"))

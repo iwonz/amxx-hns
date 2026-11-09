@@ -3,8 +3,14 @@ import unittest
 from pathlib import Path
 
 
-SOURCE_PATH = Path(__file__).parents[1] / "src" / "scripting" / "hns.sma"
-SOURCE = SOURCE_PATH.read_text(encoding="utf-8")
+SCRIPTING_DIR = Path(__file__).parents[1] / "src" / "scripting"
+SOURCE_PATH = SCRIPTING_DIR / "hns.sma"
+ROOT_SOURCE = SOURCE_PATH.read_text(encoding="utf-8")
+INTERNAL_SOURCE_PATHS = sorted((SCRIPTING_DIR / "hns").glob("*.inc"))
+SOURCE = "\n".join(
+  [ROOT_SOURCE]
+  + [path.read_text(encoding="utf-8") for path in INTERNAL_SOURCE_PATHS]
+)
 CONFIG_PATH = Path(__file__).parents[1] / "src" / "configs" / "hns.cfg"
 CONFIG = CONFIG_PATH.read_text(encoding="cp1251")
 LANG_PATH = Path(__file__).parents[1] / "src" / "data" / "lang" / "hns.txt"
@@ -31,6 +37,10 @@ def function_body(name: str) -> str:
 
 
 class HnsSourceRegressionTests(unittest.TestCase):
+  def test_every_internal_module_is_included_by_composition_root(self):
+    for path in INTERNAL_SOURCE_PATHS:
+      self.assertIn(f'#include "hns/{path.name}"', ROOT_SOURCE)
+
   def test_play_only_restores_afk_spectators_to_playable_team(self):
     body = function_body("fnSayPlay")
     guard = "if(get_user_team(id) != 3 || !fnIsPlayableTeam(g_aIsAfkTeam[id]))"
