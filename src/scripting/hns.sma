@@ -16,14 +16,8 @@
 #include "hns/fall_damage.inc"
 #include "hns/equipment.inc"
 
-new const FLASHBANG_MODEL[] = "models/w_flashbang.mdl";
-
-new g_iFlasher;
-new g_iFlasherTeam;
-new bool:g_bFlashFailed;
-new bool:g_bFlashbangEntity[MAX_TRACKED_ENTITIES];
-
 #include "hns/countdown.inc"
+#include "hns/flashbang.inc"
 #include "hns/team_flow.inc"
 #include "hns/round.inc"
 
@@ -176,13 +170,6 @@ fnRemovePlayerTasks(id) {
 	remove_task(TASK_FORCE_JOIN + id);
 }
 
-public fwdSetModel(ent, const szModel[]) {
-	if(ent > 0 && ent < sizeof g_bFlashbangEntity)
-		g_bFlashbangEntity[ent] = equal(szModel, FLASHBANG_MODEL) != 0;
-
-	return FMRES_IGNORED;
-}
-
 public fwdThink(ent) {
 	if(ent == g_TimerEntity) {
 		if(!g_bStart) {
@@ -199,57 +186,6 @@ public fwdThink(ent) {
 
 	return FMRES_IGNORED;
 }
-
-bool:fnIsFlashbangDetonating(ent) {
-	if(
-		ent <= 0 ||
-		ent >= sizeof g_bFlashbangEntity ||
-		!g_bFlashbangEntity[ent] ||
-		!pev_valid(ent)
-	)
-		return false;
-
-	new Float:fDamageTime;
-	pev(ent, pev_dmgtime, fDamageTime);
-
-	return fDamageTime <= get_gametime();
-}
-
-fnPrepareFlashbang(ent) {
-	g_bFlashbangEntity[ent] = false;
-
-	new iOwner = pev(ent, pev_owner);
-
-	if(is_user_connected(iOwner)) {
-		g_iFlasher = iOwner;
-		g_iFlasherTeam = get_user_team(iOwner);
-	} else {
-		g_iFlasher = 0;
-		g_iFlasherTeam = 0;
-	}
-
-	new iFailureChance = clamp(get_pcvar_num(g_aCvar[CVAR_FLASHBANG_FAILURE_CHANCE]), 0, 100);
-	g_bFlashFailed = iFailureChance > 0 && random_num(1, 100) <= iFailureChance;
-
-	if(g_bFlashFailed && is_user_connected(iOwner))
-		fnNotifyFlashbangFailure(iOwner);
-}
-
-fnNotifyFlashbangFailure(id) {
-	new iNotifyMode = clamp(get_pcvar_num(g_aCvar[CVAR_FLASHBANG_FAILURE_NOTIFY]), 0, 3);
-
-	switch(iNotifyMode) {
-		case 1:
-			ChatColorKey(id, "HNS_FLASH_FAILED_CHAT");
-		case 2: {
-			set_dhudmessage(255, 80, 0, -1.0, 0.65, 0, 0.0, 2.0, 0.1, 0.2);
-			show_dhudmessage(id, "%L", id, "HNS_FLASH_FAILED_HUD");
-		}
-		case 3:
-			client_cmd(id, "spk buttons/button10.wav");
-	}
-}
-
 public plugin_precache() {
 	g_aCvar[CVAR_REMOVE_BREAKABLES] = register_cvar("hns_remove_breakables", "1");
 	g_aCvar[CVAR_REMOVE_DOORS] = register_cvar("hns_remove_doors", "1");
@@ -266,32 +202,4 @@ public plugin_precache() {
 	}
 
 	precache_sound("hns/falldown/1.wav");
-}
-
-public msgScreenFade(msgId, msgDest, msgEnt) {
-	if(!fnIsFlashScreenFade() || !g_iFlasherTeam || !is_user_alive(msgEnt))
-		return PLUGIN_CONTINUE;
-
-	if(g_bFlashFailed)
-		return PLUGIN_HANDLED;
-
-	if(g_iTimer && get_pcvar_num(g_aCvar[CVAR_TIMER_ANTIFLASH_CT]) == 1 && get_user_team(msgEnt) == 2)
-		return PLUGIN_HANDLED;
-
-	if(g_iFlasher == msgEnt && get_pcvar_num(g_aCvar[CVAR_FLASH_FLASHER]) == 0)
-		return PLUGIN_HANDLED;
-
-	if(g_iFlasherTeam == get_user_team(msgEnt) && get_pcvar_num(g_aCvar[CVAR_FLASH_TEAMMATE]) == 0)
-		return PLUGIN_HANDLED;
-
-	return PLUGIN_CONTINUE;
-}
-
-bool:fnIsFlashScreenFade() {
-	return (
-		get_msg_arg_int(4) == 255 &&
-		get_msg_arg_int(5) == 255 &&
-		get_msg_arg_int(6) == 255 &&
-		get_msg_arg_int(7) > 0
-	);
 }

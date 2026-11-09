@@ -31,7 +31,7 @@ docker run --rm --platform linux/386 -v "$PWD":/workspace -v /private/tmp/amxx-r
 - [x] 4.1 Извлечь AFK, autojoin, manual team change, role swap и player-count helpers в guarded `hns/team_flow.inc`, сохранив команды, message hooks, task scheduling и slot cleanup; выполнить обязательную проверку Pawn-шагов и оформить отдельный коммит.
 - [x] 4.2 Извлечь round end, win message/audio suppression и win sound config/precache в guarded `hns/round.inc`, сохранив порядок side effects и precache timing; выполнить обязательную проверку Pawn-шагов и оформить отдельный коммит.
 - [x] 4.3 Извлечь countdown, freeze/unfreeze и countdown revive callbacks вместе с их состоянием в guarded `hns/countdown.inc`, оставив общий `FM_Think` dispatcher в `hns.sma`; выполнить обязательную проверку Pawn-шагов и оформить отдельный коммит.
-- [ ] 4.4 Извлечь flashbang entity tracking, failure notification и ScreenFade policy вместе с их состоянием в guarded `hns/flashbang.inc`, сохранив один общий `FM_Think` и все частые callback без дополнительной работы; выполнить обязательную проверку Pawn-шагов и оформить отдельный коммит.
+- [x] 4.4 Извлечь flashbang entity tracking, failure notification и ScreenFade policy вместе с их состоянием в guarded `hns/flashbang.inc`, сохранив один общий `FM_Think` и все частые callback без дополнительной работы; выполнить обязательную проверку Pawn-шагов и оформить отдельный коммит.
 
 ## 5. Documentation and integration
 

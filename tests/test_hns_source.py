@@ -110,6 +110,13 @@ class HnsSourceRegressionTests(unittest.TestCase):
     self.assertIn("g_bFlashFailed", fade_body)
     self.assertNotIn("random_num", fade_body)
     self.assertIn("random_num", function_body("fnPrepareFlashbang"))
+    self.assertIn(
+      "fnResetFlashbangRoundState();",
+      function_body("fnRoundBeforeFreezeTime"),
+    )
+    reset_body = function_body("fnResetFlashbangRoundState")
+    self.assertIn("g_iFlasher = g_iFlasherTeam = 0;", reset_body)
+    self.assertIn("g_bFlashFailed = false;", reset_body)
 
   def test_flash_failure_notification_mode_is_configurable_and_sent_once(self):
     self.assertIn("CVAR_FLASHBANG_FAILURE_NOTIFY", SOURCE)

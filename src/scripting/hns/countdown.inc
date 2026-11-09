@@ -67,9 +67,7 @@ public fnRoundBeforeFreezeTime() {
 	fnGetPlayers(iTR, iCT);
 
 	g_bStart = iTR > 0 && iCT > 0;
-
-	g_iFlasher = g_iFlasherTeam = 0;
-	g_bFlashFailed = false;
+	fnResetFlashbangRoundState();
 }
 
 public fnRoundAfterFreezeTime() {
