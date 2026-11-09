@@ -4,8 +4,6 @@
 
 Плагин управляет основным циклом раунда, командами игроков, экипировкой, правилами Flashbang, уроном от падения, автоматическим лечением и сообщениями. Это не готовая серверная сборка: карты, баланс, движение, anti-frag, статистика и дополнительные игровые механики подключаются отдельными AMXX-плагинами.
 
-[Актуальные версии и готовые сборки](https://github.com/iwonz/amxx-hns/releases) публикуются в GitHub Releases. Версия внутри `hns.amxx`, имя тега и Release всегда должны совпадать.
-
 ## Как проходит раунд
 
 1. Новый раунд считается игровым, только если есть хотя бы один игрок в T и один в CT.
@@ -135,7 +133,7 @@ amxx modules
 
 Числовые Cvar зарегистрированы через AMX Mod X 1.10 с допустимыми границами: сервер автоматически приводит выходящие за документированный диапазон значения к ближайшей границе. Изменения настроек применяются к runtime-логике без перезагрузки плагина, кроме путей к звукам победы, которые требуют нового precache после смены карты.
 
-В таблицах приведены значения из поставляемого `hns.cfg`. Если файл отсутствует, некоторые встроенные значения отличаются; полный контракт зафиксирован в [OpenSpec конфигурации](openspec/specs/configuration-and-localization/spec.md).
+В таблицах приведены значения из поставляемого `hns.cfg`. Если файл отсутствует, некоторые встроенные значения отличаются.
 
 ### Раунд и отсчёт
 
@@ -242,8 +240,6 @@ AMX Mod X-флаги задаются буквами; `t` — пользоват
 - `hns_remove_doors` и `hns_remove_breakables` зарегистрированы кодом, но отсутствуют в поставляемом `hns.cfg`; они читаются при spawn сущностей, поэтому изменение проявляется только на следующей загрузке карты.
 - `src/sound/hns/start/1.wav` сейчас не вызывается кодом и не требуется для работы.
 
-Эти ограничения зафиксированы в OpenSpec и должны изменяться только вместе с соответствующими спецификациями.
-
 ## Разработка
 
 Структура проекта:
@@ -251,15 +247,10 @@ AMX Mod X-флаги задаются буквами; `t` — пользоват
 ```text
 src/scripting/hns.sma       composition root и единственная точка компиляции
 src/scripting/hns/          внутренние модули, собираемые в тот же hns.amxx
-src/scripting/hns/version.inc единственный источник SemVer-версии плагина
 src/configs/hns.cfg         поставляемая конфигурация, кодировка CP1251
 src/data/lang/hns.txt       словарь RU/EN, UTF-8
 src/sound/hns/              игровые WAV-файлы
-scripts/release.py          проверка версии, тега и сборка release assets
-.github/workflows/release.yml проверенная сборка и публикация GitHub Release
 tests/                      регрессионные проверки исходника и документации
-openspec/specs/             спецификации актуального поведения
-openspec/changes/           активные и архивные OpenSpec-изменения
 ```
 
 `hns.sma` хранит metadata плагина, регистрацию Cvar/hooks, client lifecycle, общий `FM_Think`, precache orchestration и кросс-функциональную очистку задач. Внутренние модули разделены по ответственности:
@@ -276,7 +267,6 @@ openspec/changes/           активные и архивные OpenSpec-изм
 | `round.inc` | Завершение раунда, сообщения и звуки победы. |
 | `countdown.inc` | Подготовительный отсчёт, freeze и revive. |
 | `flashbang.inc` | Отслеживание Flashbang, отказ гранаты и правила ослепления. |
-| `version.inc` | Единственная Pawn-константа версии в формате SemVer. |
 
 Все `.inc` имеют общее пространство имён Pawn и являются внутренними частями одного плагина. Публичных natives/forwards или стабильного include API для сторонних плагинов эта структура не добавляет.
 
@@ -292,74 +282,7 @@ python3 -B -m unittest discover -s tests -v
 git diff --check
 ```
 
-Перед релизом также скомпилируйте только `hns.sma` официальным компилятором AMX Mod X 1.10; каталог `src/scripting/hns/` должен оставаться рядом с ним. Отдельный `dhudmessage.inc` не нужен: DHUD natives входят в официальный `amxmodx.inc`.
-
-## Версионирование и релизы
-
-Единственный источник номера версии — `src/scripting/hns/version.inc`, константа `HNS_VERSION`. Не дублируйте номер вручную в `hns.sma`, README или workflow: helper читает его из Pawn include, а GitHub Actions проверяет точное совпадение с тегом.
-
-Проект использует полный SemVer 2.0.0:
-
-- повышайте **MAJOR**, если выпуск несовместим с прежней установкой, конфигурацией или обещанным поведением;
-- повышайте **MINOR** для обратно совместимой функции или нового Cvar;
-- повышайте **PATCH** для обратно совместимого исправления;
-- prerelease записывается после дефиса, например `2.0.0-rc.1`;
-- build metadata после `+` допустима, но не заменяет повышение PATCH для новой поставки.
-
-Проверить текущий источник версии и предполагаемый тег локально:
-
-```sh
-python3 scripts/release.py version
-VERSION=$(python3 scripts/release.py version)
-python3 scripts/release.py verify-tag --tag "v$VERSION"
-```
-
-После компиляции можно собрать те же assets, которые публикует CI:
-
-```sh
-python3 scripts/release.py package \
-  --plugin build/hns.amxx \
-  --output-dir build/release
-```
-
-### Выпуск новой версии
-
-Сначала измените только `HNS_VERSION`, завершите OpenSpec change и прогоните тесты, strict validation, `git diff --check` и официальную AMXX-компиляцию. Затем выполняйте операции именно в таком порядке:
-
-```sh
-VERSION=$(python3 scripts/release.py version)
-python3 scripts/release.py verify-tag --tag "v$VERSION"
-git add src/scripting/hns/version.inc
-git commit -m "Release v$VERSION"
-git push origin master
-git tag -a "v$VERSION" -m "Release v$VERSION"
-git push origin "v$VERSION"
-```
-
-Сначала commit должен попасть в `master`, и только затем annotated tag создаётся на этом проверенном commit. Не перемещайте уже опубликованный тег и не переиспользуйте его номер: исправление выпускается новой PATCH-версией.
-
-Push совпадающего `v<SemVer>` запускает `.github/workflows/release.yml`. Read-only job повторно проверяет тег, тесты, OpenSpec, SHA-256 официального AMX Mod X 1.10.0.5487, компиляцию и пакет. Только после его успеха отдельный job с `contents: write` создаёт GitHub Release, прикладывает ZIP, `hns.amxx`, `SHA256SUMS` и формирует release notes. Тег с prerelease-компонентом публикуется как GitHub prerelease; обычный push в ветку Release не создаёт.
-
-## Работа через OpenSpec
-
-`openspec/specs/` — источник истины о текущем поведении. Любое функциональное изменение, исправление бага или изменение Cvar сначала оформляется как OpenSpec change, затем реализуется и архивируется с обновлением основных спецификаций.
-
-Структура и агентские workflow сгенерированы OpenSpec CLI `1.14.2`. Установить совместимую версию можно так:
-
-```sh
-npm install -g @fission-ai/openspec@1.14.2
-```
-
-Основные команды проверки:
-
-```sh
-openspec list --specs
-openspec validate --all --strict
-```
-
-Для Codex доступны проектные навыки `$openspec-explore`, `$openspec-propose`, `$openspec-apply-change`, `$openspec-sync-specs`, `$openspec-update-change` и `$openspec-archive-change`. Другие `AGENTS.md`-совместимые агенты используют аналогичные slash-команды из `.agents/skills/`.
-
-Правила для агентов находятся в [AGENTS.md](AGENTS.md), а контекст OpenSpec — в [openspec/config.yaml](openspec/config.yaml).
+Для проверки сборки скомпилируйте только `hns.sma` официальным компилятором AMX Mod X 1.10; каталог `src/scripting/hns/` должен оставаться рядом с ним. Отдельный `dhudmessage.inc` не нужен: DHUD natives входят в официальный `amxmodx.inc`.
 
 ## Лицензия
 
