@@ -7,6 +7,18 @@ SCRIPTING_DIR = Path(__file__).parents[1] / "src" / "scripting"
 SOURCE_PATH = SCRIPTING_DIR / "hns.sma"
 ROOT_SOURCE = SOURCE_PATH.read_text(encoding="utf-8")
 INTERNAL_SOURCE_PATHS = sorted((SCRIPTING_DIR / "hns").glob("*.inc"))
+EXPECTED_INTERNAL_MODULES = {
+  "countdown.inc",
+  "definitions.inc",
+  "equipment.inc",
+  "fall_damage.inc",
+  "flashbang.inc",
+  "map_rules.inc",
+  "player_state.inc",
+  "round.inc",
+  "team_flow.inc",
+  "ui.inc",
+}
 SOURCE = "\n".join(
   [ROOT_SOURCE]
   + [path.read_text(encoding="utf-8") for path in INTERNAL_SOURCE_PATHS]
@@ -37,9 +49,24 @@ def function_body(name: str) -> str:
 
 
 class HnsSourceRegressionTests(unittest.TestCase):
+  def test_internal_module_set_matches_the_composition_contract(self):
+    self.assertEqual(
+      EXPECTED_INTERNAL_MODULES,
+      {path.name for path in INTERNAL_SOURCE_PATHS},
+    )
+
   def test_every_internal_module_is_included_by_composition_root(self):
     for path in INTERNAL_SOURCE_PATHS:
       self.assertIn(f'#include "hns/{path.name}"', ROOT_SOURCE)
+
+  def test_core_does_not_expose_a_public_plugin_api(self):
+    for public_api_marker in (
+      "public plugin_natives()",
+      "register_library(",
+      "register_native(",
+      "CreateMultiForward(",
+    ):
+      self.assertNotIn(public_api_marker, SOURCE)
 
   def test_play_only_restores_afk_spectators_to_playable_team(self):
     body = function_body("fnSayPlay")

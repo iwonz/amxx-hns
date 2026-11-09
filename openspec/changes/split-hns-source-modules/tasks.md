@@ -36,7 +36,7 @@ docker run --rm --platform linux/386 -v "$PWD":/workspace -v /private/tmp/amxx-r
 ## 5. Documentation and integration
 
 - [x] 5.1 Обновить README: описать composition root, назначение внутренних модулей, требование хранить каталог `hns/` рядом с `hns.sma` и компилировать только `hns.sma`; проверить task командой `python3 -B -m unittest discover -s tests -v` и оформить отдельный коммит.
-- [ ] 5.2 Зафиксировать в source regression test полный ожидаемый набор внутренних модулей и отсутствие публичного plugin API; выполнить обязательную проверку Pawn-шагов и оформить отдельный коммит.
+- [x] 5.2 Зафиксировать в source regression test полный ожидаемый набор внутренних модулей и отсутствие публичного plugin API; выполнить обязательную проверку Pawn-шагов и оформить отдельный коммит.
 - [ ] 5.3 Выполнить свежую интеграционную проверку командами `python3 -B -m unittest discover -s tests -v`, указанной выше компиляцией AMX Mod X 1.10, `/Users/i.zimin/.npm/_npx/8aea7483029d0f87/node_modules/.bin/openspec validate --all --strict` и `git diff --check`; проверить, что не добавлены `.amxx`, временные файлы и незапланированные изменения `hns.cfg`, `hns.txt` или основных specs.
 
 ## Workflow follow-up
