@@ -81,7 +81,7 @@ public fnTimer(ent) {
 
 	if(g_iTimer > 0) {
 		for(i = 0; i < iPlayersCount; i++) {
-			if(g_bConnected[aPlayers[i]] && !is_user_bot(aPlayers[i]) && !is_user_hltv(aPlayers[i])) {
+			if(g_bConnected[aPlayers[i]]) {
 				if(cs_get_user_team(aPlayers[i]) == CS_TEAM_CT) {
 					set_pev(aPlayers[i], pev_flags, pev(aPlayers[i], pev_flags) | FL_FROZEN);
 

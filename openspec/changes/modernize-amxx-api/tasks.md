@@ -32,9 +32,9 @@
 
 ## 6. Сократить работу частых Fakemeta callbacks
 
-- [ ] 6.1 Добавить regression tests на дешёвые ранние фильтры `FM_EmitSound`/`FM_CmdStart`/flash `FM_Think` и отсутствие повторных bot/HLTV-проверок после `get_players(..., "ch")`; запустить `python3 -B -m unittest discover -s tests -v` и подтвердить ожидаемое падение
-- [ ] 6.2 Переставить проверки и обращения к entity/player state в согласованном порядке без изменения fake-knife, Flashbang и countdown поведения
-- [ ] 6.3 Проверить зелёный `python3 -B -m unittest discover -s tests -v`, выполнить AMXX 1.10 docker-компиляцию из пункта 2.3 и зафиксировать изменение коммитом `Reduce work in frequent Fakemeta callbacks` после `git diff --check`
+- [x] 6.1 Добавить regression tests на дешёвые ранние фильтры `FM_EmitSound`/`FM_CmdStart`/flash `FM_Think` и отсутствие повторных bot/HLTV-проверок после `get_players(..., "ch")`; запустить `python3 -B -m unittest discover -s tests -v` и подтвердить ожидаемое падение
+- [x] 6.2 Переставить проверки и обращения к entity/player state в согласованном порядке без изменения fake-knife, Flashbang и countdown поведения
+- [x] 6.3 Проверить зелёный `python3 -B -m unittest discover -s tests -v`, выполнить AMXX 1.10 docker-компиляцию из пункта 2.3 и зафиксировать изменение коммитом `Reduce work in frequent Fakemeta callbacks` после `git diff --check`
 
 ## 7. Интеграционная проверка
 

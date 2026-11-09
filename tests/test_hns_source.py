@@ -324,7 +324,7 @@ class HnsSourceRegressionTests(unittest.TestCase):
   def test_alive_checks_use_engine_state_instead_of_cached_flags(self):
     self.assertNotIn("g_bAlive", SOURCE)
     self.assertIn("if(is_user_alive(id))", function_body("fnSayAfk"))
-    self.assertIn("if(!is_user_alive(id))", function_body("fwdCmdStart"))
+    self.assertIn("!is_user_alive(id)", function_body("fwdCmdStart"))
     self.assertIn("!is_user_alive(msgEnt)", function_body("msgScreenFade"))
     self.assertIn("is_user_alive(aPlayers[i])", function_body("fnTRAlive"))
 
@@ -541,6 +541,57 @@ class HnsSourceRegressionTests(unittest.TestCase):
 
     self.assertIn("fnResetFallDamageState(id);", function_body("client_connect"))
     self.assertIn("fnResetFallDamageState(id);", function_body("client_disconnected"))
+
+  def test_frequent_callbacks_run_cheap_filters_before_native_work(self):
+    emit_body = function_body("fwdEmitSound")
+    emit_range_guard = "if(id < 1 || id > MaxClients)"
+    emit_sound_guard = 'if(!equal(szSound, "weapons/knife_deploy1.wav"))'
+    emit_mode_guard = (
+      "if(g_iCvarTrFakeKnifeMode != 1 && g_iCvarTrFakeKnifeMode != 2)"
+    )
+    emit_player_guard = (
+      "if(!is_user_alive(id) || cs_get_user_team(id) != CS_TEAM_T)"
+    )
+
+    for expected in (
+      emit_range_guard,
+      emit_sound_guard,
+      emit_mode_guard,
+      emit_player_guard,
+    ):
+      self.assertIn(expected, emit_body)
+    self.assertLess(emit_body.index(emit_range_guard), emit_body.index(emit_sound_guard))
+    self.assertLess(emit_body.index(emit_sound_guard), emit_body.index(emit_mode_guard))
+    self.assertLess(emit_body.index(emit_mode_guard), emit_body.index(emit_player_guard))
+
+    cmd_body = function_body("fwdCmdStart")
+    cmd_mode_guard = (
+      "if(g_iCvarTrFakeKnifeMode != 1 && g_iCvarTrFakeKnifeMode != 2)"
+    )
+    cmd_player_guard = (
+      "if(!is_user_alive(id) || cs_get_user_team(id) != CS_TEAM_T)"
+    )
+    self.assertIn(cmd_mode_guard, cmd_body)
+    self.assertIn(cmd_player_guard, cmd_body)
+    self.assertLess(cmd_body.index(cmd_mode_guard), cmd_body.index(cmd_player_guard))
+    self.assertLess(cmd_body.index(cmd_player_guard), cmd_body.index("get_user_weapon"))
+    self.assertLess(cmd_body.index("get_user_weapon"), cmd_body.index("get_uc"))
+
+    think_body = function_body("fwdThink")
+    tracked_guard = (
+      "if(ent <= 0 || ent >= sizeof g_bFlashbangEntity || !g_bFlashbangEntity[ent])"
+    )
+    self.assertIn(tracked_guard, think_body)
+    self.assertLess(think_body.index(tracked_guard), think_body.index("fnIsFlashbangDetonating"))
+
+    flash_think_body = function_body("fnIsFlashbangDetonating")
+    self.assertIn("if(!pev_valid(ent))", flash_think_body)
+    self.assertNotIn("g_bFlashbangEntity", flash_think_body)
+
+    timer_body = function_body("fnTimer")
+    self.assertIn('get_players(aPlayers, iPlayersCount, "ch");', timer_body)
+    self.assertNotIn("is_user_bot", timer_body)
+    self.assertNotIn("is_user_hltv", timer_body)
 
   def test_countdown_and_fall_fades_have_independent_config_keys(self):
     expected_values = {

@@ -24,12 +24,7 @@ public fwdSetModel(ent, const szModel[]) {
 }
 
 bool:fnIsFlashbangDetonating(ent) {
-	if(
-		ent <= 0 ||
-		ent >= sizeof g_bFlashbangEntity ||
-		!g_bFlashbangEntity[ent] ||
-		!pev_valid(ent)
-	)
+	if(!pev_valid(ent))
 		return false;
 
 	new Float:fDamageTime;

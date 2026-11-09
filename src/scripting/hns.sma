@@ -219,6 +219,9 @@ public fwdThink(ent) {
 		return FMRES_IGNORED;
 	}
 
+	if(ent <= 0 || ent >= sizeof g_bFlashbangEntity || !g_bFlashbangEntity[ent])
+		return FMRES_IGNORED;
+
 	if(fnIsFlashbangDetonating(ent))
 		fnPrepareFlashbang(ent);
 

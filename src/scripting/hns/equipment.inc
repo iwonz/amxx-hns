@@ -18,23 +18,28 @@ public fnPlayerSpawnAfter(id) {
 }
 
 public fwdEmitSound(id, channel, const szSound[]) {
-	if(
-		(g_iCvarTrFakeKnifeMode == 1 || g_iCvarTrFakeKnifeMode == 2) &&
-		get_user_team(id) == _:CS_TEAM_T &&
-		equal(szSound, "weapons/knife_deploy1.wav")
-	)
-		return FMRES_SUPERCEDE;
+	if(id < 1 || id > MaxClients)
+		return FMRES_IGNORED;
 
-	return FMRES_IGNORED;
+	if(!equal(szSound, "weapons/knife_deploy1.wav"))
+		return FMRES_IGNORED;
+
+	if(g_iCvarTrFakeKnifeMode != 1 && g_iCvarTrFakeKnifeMode != 2)
+		return FMRES_IGNORED;
+
+	if(!is_user_alive(id) || cs_get_user_team(id) != CS_TEAM_T)
+		return FMRES_IGNORED;
+
+	return FMRES_SUPERCEDE;
 }
 public fwdCmdStart(id, handle) {
-	if(!is_user_alive(id))
+	if(g_iCvarTrFakeKnifeMode != 1 && g_iCvarTrFakeKnifeMode != 2)
+		return FMRES_IGNORED;
+
+	if(!is_user_alive(id) || cs_get_user_team(id) != CS_TEAM_T)
 		return FMRES_IGNORED;
 
 	if(get_user_weapon(id) != CSW_KNIFE)
-		return FMRES_IGNORED;
-
-	if(cs_get_user_team(id) != CS_TEAM_T || (g_iCvarTrFakeKnifeMode != 1 && g_iCvarTrFakeKnifeMode != 2))
 		return FMRES_IGNORED;
 
 	new iButtons = get_uc(handle, UC_Buttons);
