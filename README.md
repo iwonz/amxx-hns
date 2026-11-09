@@ -62,6 +62,8 @@ amxxpc.exe <repo>\src\scripting\hns.sma -iinclude -o<repo>\hns.amxx
 
 Замените `<repo>` абсолютным путём к клону этого репозитория. Успешная сборка создаст `hns.amxx`. Предупреждение о deprecated-функции `client_disconnect` на AMX Mod X 1.10 известно и не мешает сборке.
 
+Не отделяйте `src/scripting/hns.sma` от каталога `src/scripting/hns/`: основной файл подключает оттуда внутренние `.inc`. Компилировать нужно только `hns.sma`; отдельные `.inc` не являются самостоятельными плагинами и не копируются на игровой сервер.
+
 ### 2. Скопируйте файлы на сервер
 
 Пути назначения указаны относительно `<server>/cstrike`.
@@ -210,7 +212,7 @@ AMX Mod X-флаги задаются буквами; `t` — пользоват
 
 1. добавьте ключ сразу в `[ru]` и `[en]`;
 2. используйте в Pawn `%L`, `ChatColorKey` или другую AMXX dictionary-функцию;
-3. не добавляйте русские или английские пользовательские строки непосредственно в `hns.sma`.
+3. не добавляйте русские или английские пользовательские строки непосредственно в Pawn-исходники `src/scripting/`.
 
 ## Известные ограничения
 
@@ -230,7 +232,8 @@ AMX Mod X-флаги задаются буквами; `t` — пользоват
 Структура проекта:
 
 ```text
-src/scripting/hns.sma       основной Pawn-плагин
+src/scripting/hns.sma       composition root и единственная точка компиляции
+src/scripting/hns/          внутренние модули, собираемые в тот же hns.amxx
 src/configs/hns.cfg         поставляемая конфигурация, кодировка CP1251
 src/data/lang/hns.txt       словарь RU/EN, UTF-8
 src/sound/hns/              игровые WAV-файлы
@@ -238,6 +241,23 @@ tests/                      регрессионные проверки исхо
 openspec/specs/             спецификации актуального поведения
 openspec/changes/           активные и архивные OpenSpec-изменения
 ```
+
+`hns.sma` хранит metadata плагина, регистрацию Cvar/hooks, client lifecycle, общий `FM_Think`, precache orchestration и кросс-функциональную очистку задач. Внутренние модули разделены по ответственности:
+
+| Модуль | Ответственность |
+| --- | --- |
+| `definitions.inc` | Общие лимиты, диапазоны task ID и таблица Cvar handles. |
+| `player_state.inc` | Состояние, индексируемое по player id. |
+| `ui.inc` | ChatColor, DHUD и ScreenFade helpers. |
+| `map_rules.inc` | Удаление сущностей карты и отключение buyzone. |
+| `fall_damage.inc` | Урон от падения, feedback и autoheal. |
+| `equipment.inc` | Выдача оружия и fake knife hooks. |
+| `team_flow.inc` | AFK, autojoin, смена команд и swap ролей. |
+| `round.inc` | Завершение раунда, сообщения и звуки победы. |
+| `countdown.inc` | Подготовительный отсчёт, freeze и revive. |
+| `flashbang.inc` | Отслеживание Flashbang, отказ гранаты и правила ослепления. |
+
+Все `.inc` имеют общее пространство имён Pawn и являются внутренними частями одного плагина. Публичных natives/forwards или стабильного include API для сторонних плагинов эта структура не добавляет.
 
 Запуск тестов:
 
@@ -251,7 +271,7 @@ python3 -B -m unittest discover -s tests -v
 git diff --check
 ```
 
-Перед релизом также скомпилируйте `hns.sma` официальным компилятором AMX Mod X 1.10.
+Перед релизом также скомпилируйте только `hns.sma` официальным компилятором AMX Mod X 1.10; каталог `src/scripting/hns/` должен оставаться рядом с ним.
 
 ## Работа через OpenSpec
 
