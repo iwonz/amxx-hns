@@ -22,7 +22,7 @@ docker run --rm --platform linux/386 -v "$PWD":/workspace -v /private/tmp/amxx-r
 
 ## 3. Leaf gameplay modules
 
-- [ ] 3.1 Извлечь map entity filtering и buyzone handling вместе с их состоянием в guarded `hns/map_rules.inc`, сохранив `FM_Spawn`/`StatusIcon` регистрацию и возвратные коды; выполнить обязательную проверку Pawn-шагов и оформить отдельный коммит.
+- [x] 3.1 Извлечь map entity filtering и buyzone handling вместе с их состоянием в guarded `hns/map_rules.inc`, сохранив `FM_Spawn`/`StatusIcon` регистрацию и возвратные коды; выполнить обязательную проверку Pawn-шагов и оформить отдельный коммит.
 - [ ] 3.2 Извлечь fall damage feedback и autoheal callbacks в guarded `hns/fall_damage.inc`, сохранив Ham hook, task ID, delay и cleanup; выполнить обязательную проверку Pawn-шагов и оформить отдельный коммит.
 - [ ] 3.3 Извлечь spawn equipment и fake knife callbacks в guarded `hns/equipment.inc`, сохранив Ham/Fakemeta hooks и task semantics; выполнить обязательную проверку Pawn-шагов и оформить отдельный коммит.
 

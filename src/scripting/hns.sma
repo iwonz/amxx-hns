@@ -12,6 +12,7 @@
 #include "hns/definitions.inc"
 #include "hns/player_state.inc"
 #include "hns/ui.inc"
+#include "hns/map_rules.inc"
 
 new const FLASHBANG_MODEL[] = "models/w_flashbang.mdl";
 new g_szHidersWinSound[MAX_SOUND_PATH_LENGTH + 1] = "radio/terwin.wav";
@@ -26,17 +27,6 @@ new bool:g_bFlashFailed;
 new bool:g_bFlashbangEntity[MAX_TRACKED_ENTITIES];
 
 new g_iTimer = 0;
-
-new g_RegisterSpawn;
-new const g_DefaultEntities[][] = {
-	"func_vip_safetyzone",
-	"func_escapezone",
-	"hostage_entity",
-	"monster_scientist",
-	"func_bomb_target",
-	"info_bomb_target",
-	"armoury_entity"
-};
 
 new g_TimerEntity;
 
@@ -859,48 +849,6 @@ fnPrecacheWinSounds() {
 
 	if(g_szSeekersWinSound[0] && !equal(g_szSeekersWinSound, g_szHidersWinSound))
 		precache_sound(g_szSeekersWinSound);
-}
-
-public fwdEntitySpawn(ent) {
-	if(!pev_valid(ent))
-		return 1;
-
-	new szClass[33];
-
-	pev(ent, pev_classname, szClass, 32);
-
-	for(new i; i < sizeof g_DefaultEntities; i++) {
-		if(equal(szClass, g_DefaultEntities[i])) {
-			engfunc(EngFunc_RemoveEntity, ent);
-			return 4;
-		}
-	}
-
-	if(get_pcvar_num(g_aCvar[CVAR_REMOVE_DOORS])) {
-		if(equal(szClass, "func_door") || equal(szClass, "func_door_rotating")) {
-			engfunc(EngFunc_RemoveEntity, ent);
-			return 4;
-		}
-	}
-
-	if(get_pcvar_num(g_aCvar[CVAR_REMOVE_BREAKABLES]) && equal(szClass, "func_breakable")) {
-		engfunc(EngFunc_RemoveEntity, ent);
-		return 4;
-	}
-
-	return 1;
-}
-
-public msgStatusIcon(msgid, msgdest, id) {
-	static szMsg[8];
-	get_msg_arg_string(2, szMsg, 7);
-
-	if(equal(szMsg, "buyzone") && get_msg_arg_int(1)) {
-		set_pdata_int(id, 235, get_pdata_int(id, 235) & ~(1<<0));
-		return 1;
-	}
-
-	return 0;
 }
 
 public msgScreenFade(msgId, msgDest, msgEnt) {
