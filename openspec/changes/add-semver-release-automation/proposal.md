@@ -10,6 +10,7 @@
 - Использовать эту версию в метаданных `register_plugin`, документации, проверках и именах релизных артефактов.
 - Ввести релизный Git-тег `v<SemVer>` и запрещать публикацию, если тег невалиден или не совпадает с версией исходника.
 - Добавить GitHub Actions workflow, который по SemVer-тегу проверяет проект, компилирует `hns.amxx` закреплённым официальным AMX Mod X 1.10, собирает готовый к установке архив и создаёт GitHub Release с контрольными суммами.
+- Удалить legacy include `dhudmessage`, отсутствующий в официальном пакете AMX Mod X 1.10.0.5487: используемые DHUD natives уже объявлены стандартным `amxmodx.inc`, поэтому runtime-поведение не меняется.
 - Документировать правила повышения MAJOR/MINOR/PATCH, выпуск prerelease и последовательность публикации релиза.
 - Добавить регрессионные проверки формата версии, единственного источника истины, структуры workflow и релизного архива.
 - Не добавлять и не изменять Cvar, чат-команды, игровые assets или ключи локализации.
@@ -25,11 +26,11 @@
 
 ### Modified Capabilities
 
-Нет.
+- `core-boundaries`: уточнить официальный набор include AMX Mod X 1.10 и отсутствие зависимости от устаревшего `dhudmessage.inc`.
 
 ## Impact
 
-- Pawn: `src/scripting/hns.sma` и новый внутренний include с версией.
+- Pawn: `src/scripting/hns.sma`, новый внутренний include с версией и удаление избыточного `#include <dhudmessage>`.
 - Автоматизация: новый локально запускаемый release helper и `.github/workflows/release.yml`.
 - Поставка: GitHub Releases с `hns-v<version>.zip`, отдельным `hns.amxx` и файлом контрольных сумм.
 - Документация и проверки: `README.md`, Python regression tests и новая спецификация `release-versioning`.

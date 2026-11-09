@@ -15,6 +15,7 @@ ROOT = Path(__file__).parents[1]
 RELEASE_SCRIPT = ROOT / "scripts" / "release.py"
 VERSION_SOURCE = ROOT / "src" / "scripting" / "hns" / "version.inc"
 HNS_SOURCE = ROOT / "src" / "scripting" / "hns.sma"
+RELEASE_WORKFLOW = ROOT / ".github" / "workflows" / "release.yml"
 
 
 @lru_cache(maxsize=1)
@@ -30,6 +31,12 @@ def load_release_module():
   sys.modules[spec.name] = module
   spec.loader.exec_module(module)
   return module
+
+
+def read_release_workflow() -> str:
+  if not RELEASE_WORKFLOW.is_file():
+    raise AssertionError(f"Release workflow is missing: {RELEASE_WORKFLOW}")
+  return RELEASE_WORKFLOW.read_text(encoding="utf-8")
 
 
 class ReleaseVersioningTests(unittest.TestCase):
@@ -262,6 +269,84 @@ class ReleaseVersioningTests(unittest.TestCase):
       self.assertTrue((output_dir / "hns-v1.0.0.zip").is_file())
       self.assertTrue((output_dir / "hns.amxx").is_file())
       self.assertTrue((output_dir / "SHA256SUMS").is_file())
+
+  def test_release_workflow_is_tag_only_and_least_privilege(self):
+    workflow = read_release_workflow()
+
+    self.assertIn(
+      'on:\n  push:\n    tags:\n      - "v*.*.*"',
+      workflow,
+    )
+    self.assertNotIn("branches:", workflow)
+    self.assertIn("group: release-${{ github.ref }}", workflow)
+    self.assertRegex(
+      workflow,
+      r"(?ms)^  build:\n.*?^    permissions:\n      contents: read$",
+    )
+    self.assertRegex(
+      workflow,
+      r"(?ms)^  publish:\n.*?^    needs: build$.*?^    permissions:\n"
+      r"      contents: write$",
+    )
+
+    publish_job = workflow.split("\n  publish:", maxsplit=1)[1]
+    self.assertNotIn("actions/checkout@", publish_job)
+
+  def test_release_workflow_pins_actions_and_amxx_toolchain(self):
+    workflow = read_release_workflow()
+
+    for pinned_action in (
+      "actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6",
+      "actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6",
+      "actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7",
+    ):
+      self.assertIn(pinned_action, workflow)
+
+    for toolchain_contract in (
+      "amxmodx-1.10.0-git5487-base-linux.tar.gz",
+      "d82d1d65c907f358c48bdebc07e20084e7e8c4f4d0e95af275e8b43f32815c7e",
+      "amxmodx-1.10.0-git5487-cstrike-linux.tar.gz",
+      "6a7541a213ef71c47c1348b3457722e95669c0135c60102d5cb5a876341aa808",
+      "https://github.com/alliedmodders/amxmodx/releases/download/1.10.0.5487/",
+      "libc6-i386",
+      "lib32stdc++6",
+      "lib32gcc-s1",
+    ):
+      self.assertIn(toolchain_contract, workflow)
+
+  def test_release_workflow_gates_build_before_transferring_artifacts(self):
+    workflow = read_release_workflow()
+
+    for required_gate in (
+      'python3 scripts/release.py verify-tag --tag "$GITHUB_REF_NAME"',
+      "python3 -B -m unittest discover -s tests -v",
+      "npx --yes @fission-ai/openspec@1.14.2 validate --all --strict",
+      "git diff --check",
+      "amxxpc",
+      "python3 scripts/release.py package",
+      "if-no-files-found: error",
+    ):
+      self.assertIn(required_gate, workflow)
+
+    artifact_name = "hns-release-${{ github.ref_name }}"
+    self.assertEqual(2, workflow.count(f"name: {artifact_name}"))
+    self.assertIn("path: build/release", workflow)
+
+  def test_release_workflow_publishes_verified_assets_and_prereleases(self):
+    workflow = read_release_workflow()
+
+    for release_contract in (
+      'gh release create "$GITHUB_REF_NAME"',
+      "--verify-tag",
+      "--generate-notes",
+      "--prerelease",
+      "build/release/hns-v${VERSION}.zip",
+      "build/release/hns.amxx",
+      "build/release/SHA256SUMS",
+      "GH_TOKEN: ${{ github.token }}",
+      "needs.build.outputs.prerelease",
+    ):
+      self.assertIn(release_contract, workflow)
 
 
 if __name__ == "__main__":

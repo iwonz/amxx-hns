@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Verify and build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.release-meta.outputs.version }}
+      prerelease: ${{ steps.release-meta.outputs.prerelease }}
+    env:
+      AMXX_DIR: ${{ runner.temp }}/amxx-1.10.0.5487
+      AMXX_DOWNLOAD_DIR: ${{ runner.temp }}/amxx-downloads
+      AMXX_BASE_ARCHIVE: amxmodx-1.10.0-git5487-base-linux.tar.gz
+      AMXX_CSTRIKE_ARCHIVE: amxmodx-1.10.0-git5487-cstrike-linux.tar.gz
+      AMXX_RELEASE_URL: https://github.com/alliedmodders/amxmodx/releases/download/1.10.0.5487/
+      AMXX_BASE_SHA256: d82d1d65c907f358c48bdebc07e20084e7e8c4f4d0e95af275e8b43f32815c7e
+      AMXX_CSTRIKE_SHA256: 6a7541a213ef71c47c1348b3457722e95669c0135c60102d5cb5a876341aa808
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify release tag
+        id: release-meta
+        shell: bash
+        run: python3 scripts/release.py verify-tag --tag "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Run regression tests
+        run: python3 -B -m unittest discover -s tests -v
+
+      - name: Validate OpenSpec
+        run: npx --yes @fission-ai/openspec@1.14.2 validate --all --strict
+
+      - name: Check whitespace
+        run: git diff --check
+
+      - name: Install 32-bit compiler runtime
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            libc6-i386 \
+            lib32stdc++6 \
+            lib32gcc-s1
+
+      - name: Download verified AMX Mod X toolchain
+        shell: bash
+        run: |
+          mkdir -p "$AMXX_DIR" "$AMXX_DOWNLOAD_DIR"
+          curl --fail --location --retry 3 --retry-all-errors \
+            --output "$AMXX_DOWNLOAD_DIR/$AMXX_BASE_ARCHIVE" \
+            "$AMXX_RELEASE_URL$AMXX_BASE_ARCHIVE"
+          curl --fail --location --retry 3 --retry-all-errors \
+            --output "$AMXX_DOWNLOAD_DIR/$AMXX_CSTRIKE_ARCHIVE" \
+            "$AMXX_RELEASE_URL$AMXX_CSTRIKE_ARCHIVE"
+          echo "$AMXX_BASE_SHA256  $AMXX_DOWNLOAD_DIR/$AMXX_BASE_ARCHIVE" \
+            | sha256sum --check --strict
+          echo "$AMXX_CSTRIKE_SHA256  $AMXX_DOWNLOAD_DIR/$AMXX_CSTRIKE_ARCHIVE" \
+            | sha256sum --check --strict
+          tar -xzf "$AMXX_DOWNLOAD_DIR/$AMXX_BASE_ARCHIVE" -C "$AMXX_DIR"
+          tar -xzf "$AMXX_DOWNLOAD_DIR/$AMXX_CSTRIKE_ARCHIVE" -C "$AMXX_DIR"
+
+      - name: Compile hns.amxx
+        shell: bash
+        run: |
+          AMXX_SCRIPTING="$AMXX_DIR/addons/amxmodx/scripting"
+          mkdir -p build
+          chmod +x "$AMXX_SCRIPTING/amxxpc"
+          "$AMXX_SCRIPTING/amxxpc" \
+            "$GITHUB_WORKSPACE/src/scripting/hns.sma" \
+            -i"$AMXX_SCRIPTING/include" \
+            -o"$GITHUB_WORKSPACE/build/hns.amxx"
+
+      - name: Build release package
+        run: |
+          python3 scripts/release.py package \
+            --plugin build/hns.amxx \
+            --output-dir build/release
+
+      - name: Upload verified release assets
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: hns-release-${{ github.ref_name }}
+          path: build/release
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download verified release assets
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: hns-release-${{ github.ref_name }}
+          path: build/release
+
+      - name: Create GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build.outputs.version }}
+          PRERELEASE: ${{ needs.build.outputs.prerelease }}
+        run: |
+          release_flags=()
+          if [[ "$PRERELEASE" == "true" ]]; then
+            release_flags+=(--prerelease)
+          fi
+
+          gh release create "$GITHUB_REF_NAME" \
+            "build/release/hns-v${VERSION}.zip#Ready-to-install server package" \
+            "build/release/hns.amxx#Compiled AMX Mod X plugin" \
+            "build/release/SHA256SUMS#SHA-256 checksums" \
+            --verify-tag \
+            --generate-notes \
+            --title "Hide N Seek: Ultimate ${VERSION}" \
+            "${release_flags[@]}"

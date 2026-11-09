@@ -69,6 +69,11 @@ class HnsSourceRegressionTests(unittest.TestCase):
     ):
       self.assertNotIn(public_api_marker, SOURCE)
 
+  def test_dhud_uses_amxmodx_natives_without_legacy_include(self):
+    self.assertNotIn("#include <dhudmessage>", ROOT_SOURCE)
+    self.assertIn("set_dhudmessage(", SOURCE)
+    self.assertIn("show_dhudmessage(", SOURCE)
+
   def test_play_only_restores_afk_spectators_to_playable_team(self):
     body = function_body("fnSayPlay")
     guard = "if(cs_get_user_team(id) != CS_TEAM_SPECTATOR || !fnIsPlayableTeam(g_aIsAfkTeam[id]))"

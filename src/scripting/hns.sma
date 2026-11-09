@@ -3,7 +3,6 @@
 #include <hamsandwich>
 #include <fun>
 #include <cstrike>
-#include <dhudmessage>
 
 #include "hns/version.inc"
 

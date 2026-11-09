@@ -6,6 +6,8 @@
 
 GitHub-hosted runner предоставляет Python 3 и GitHub CLI. Для создания Release требуется явное разрешение `contents: write`, а `gh release create --verify-tag` позволяет запретить неявное создание тега. Официальный релиз AMX Mod X 1.10.0.5487 предоставляет отдельные Linux-архивы base и cstrike.
 
+Проверка этих архивов выявила, что отдельного `dhudmessage.inc` в официальной поставке нет: `set_dhudmessage` и `show_dhudmessage` объявлены непосредственно в `amxmodx.inc`. Текущее подключение legacy include из локально собранного toolchain мешает воспроизводимой официальной сборке.
+
 ## Goals / Non-Goals
 
 **Goals:**
@@ -84,6 +86,8 @@ Build job загружает официальные assets релиза AlliedMo
 
 Workflow устанавливает только 32-bit runtime-библиотеки, необходимые официальному Linux `amxxpc`, и компилирует `src/scripting/hns.sma` с include из проверенного архива. URL не использует плавающий `latest`.
 
+Перед включением workflow из `hns.sma` удаляется избыточный `#include <dhudmessage>`, а regression test запрещает его возврат. DHUD-вызовы и визуальное поведение не меняются, потому что те же natives предоставляет обязательный `amxmodx.inc`.
+
 Альтернатива — непроверенный standalone compiler или случайный Docker image — не даёт столь прямой связи с официальным AMX Mod X. Плавающий snapshot может внезапно изменить бинарник или перестать быть доступным.
 
 ### 6. TDD для релизного контракта
@@ -94,7 +98,7 @@ Workflow устанавливает только 32-bit runtime-библиоте
 
 ### 7. Отсутствие влияния на runtime
 
-Изменение затрагивает только аргумент версии при `register_plugin`. Оно не добавляет AMXX events, messages, Ham hooks, Fakemeta forwards, task IDs, precache или cleanup paths. Нет логики на игрока, кадр, сообщение или entity think и, следовательно, нет измеримого runtime-влияния.
+Изменение затрагивает только аргумент версии при `register_plugin` и compile-time include DHUD natives. Оно не добавляет AMXX events, messages, Ham hooks, Fakemeta forwards, task IDs, precache или cleanup paths. Нет логики на игрока, кадр, сообщение или entity think и, следовательно, нет измеримого runtime-влияния.
 
 `hns.cfg`, Cvar, `hns.txt`, RU/EN-ключи и звуковые assets не меняются. Release helper копирует существующие ресурсы без перекодирования.
 
@@ -111,7 +115,7 @@ Workflow устанавливает только 32-bit runtime-библиоте
 
 1. Добавить падающие regression tests для SemVer, тега, package и workflow.
 2. Ввести `version.inc`, подключить его к `hns.sma` и нормализовать версию до `1.0.0`.
-3. Реализовать helper, затем workflow и README; прогнать все локальные gates и официальную компиляцию.
+3. Удалить legacy `dhudmessage` include, реализовать helper, затем workflow и README; прогнать все локальные gates и официальную компиляцию.
 4. Синхронизировать `release-versioning` в основные OpenSpec specs и архивировать change.
 5. Отправить implementation commits в `master`, создать annotated tag `v1.0.0` на проверенном commit и отправить tag.
 6. Убедиться, что GitHub Release `v1.0.0` содержит три ожидаемых assets и что checksum/структура архива корректны.
