@@ -109,7 +109,7 @@ class HnsSourceRegressionTests(unittest.TestCase):
       function_body("fnRoundBeforeFreezeTime"),
     )
     self.assertIn(
-      "g_iTimer = clamp(get_pcvar_num(g_aCvar[CVAR_TIMER]), 1, 10);",
+      "g_iTimer = g_iCvarTimer;",
       function_body("fnRoundAfterFreezeTime"),
     )
     self.assertIn("fnStopCountdown();", function_body("fnRoundEnd"))
@@ -146,9 +146,9 @@ class HnsSourceRegressionTests(unittest.TestCase):
     self.assertIn("g_bFlashFailed = false;", reset_body)
 
   def test_flash_failure_notification_mode_is_configurable_and_sent_once(self):
-    self.assertIn("CVAR_FLASHBANG_FAILURE_NOTIFY", SOURCE)
+    self.assertIn("g_iCvarFlashbangFailureNotify", SOURCE)
     self.assertIn(
-      'register_cvar("hns_flashbang_failure_notify", "1")',
+      'create_cvar("hns_flashbang_failure_notify", "1"',
       SOURCE,
     )
     self.assertIn('hns_flashbang_failure_notify "1"', CONFIG)
@@ -162,7 +162,7 @@ class HnsSourceRegressionTests(unittest.TestCase):
     self.assertIn("fnNotifyFlashbangFailure(iOwner);", prepare_body)
 
     notify_body = function_body("fnNotifyFlashbangFailure")
-    self.assertIn("switch(iNotifyMode)", notify_body)
+    self.assertIn("switch(g_iCvarFlashbangFailureNotify)", notify_body)
     self.assertIn("case 1:", notify_body)
     self.assertIn("case 2:", notify_body)
     self.assertIn("case 3:", notify_body)
@@ -216,7 +216,7 @@ class HnsSourceRegressionTests(unittest.TestCase):
     self.assertIn("fnPlayWinSound(2);", round_end_body)
 
     play_body = function_body("fnPlayWinSound")
-    self.assertIn("CVAR_WIN_SOUND_MODE", play_body)
+    self.assertIn("g_iCvarWinSoundMode", play_body)
     self.assertIn('client_cmd(0, "spk %s", szSound);', play_body)
     self.assertNotIn("Кастомные звуки на победу", SOURCE)
 
@@ -256,7 +256,7 @@ class HnsSourceRegressionTests(unittest.TestCase):
     body = function_body("msgScreenFade")
     flash_guard = "if(!fnIsFlashScreenFade()"
     countdown_guard = (
-      "if(g_iTimer && get_pcvar_num(g_aCvar[CVAR_TIMER_ANTIFLASH_CT]) == 1 "
+      "if(g_iTimer && g_iCvarTimerAntiflashCt == 1 "
       "&& get_user_team(msgEnt) == 2)"
     )
 
@@ -341,14 +341,91 @@ class HnsSourceRegressionTests(unittest.TestCase):
     self.assertIn("return fnHandleTeamChange(id);", function_body("fnJoinTeam"))
 
     body = function_body("fnHandleTeamChange")
-    global_allow = "if(get_pcvar_num(g_aCvar[CVAR_CHANGE_TEAM]) == 1)"
-    immunity_check = "if(get_pcvar_num(g_aCvar[CVAR_CHANGE_TEAM_IMMUNITY]) == 1)"
+    global_allow = "if(g_iCvarChangeTeam == 1)"
+    immunity_check = "if(g_iCvarChangeTeamImmunity == 1)"
 
     self.assertIn(global_allow, body)
     self.assertIn(immunity_check, body)
     self.assertLess(body.index(global_allow), body.index(immunity_check))
     self.assertIn("return PLUGIN_CONTINUE;", body)
     self.assertIn("return PLUGIN_HANDLED;", body)
+
+  def test_cvars_use_create_api_bounds_and_bound_runtime_state(self):
+    self.assertNotIn("register_cvar(", SOURCE)
+    self.assertNotRegex(SOURCE, r"\bget_pcvar_(?:num|float|string)\(")
+    self.assertNotIn("g_aCvar", SOURCE)
+
+    created = re.findall(r'create_cvar\("([^"]+)"', SOURCE)
+    bindings = re.findall(r"\bbind_pcvar_(?:num|float|string)\(", SOURCE)
+    self.assertGreater(len(created), 0)
+    self.assertEqual(len(created) - 2, len(bindings))
+
+    bounded_groups = {
+      (0.0, 1.0): {
+        "hns_timer_immortal",
+        "hns_timer_antiflash_ct",
+        "hns_cd_sound",
+        "hns_ct_timer_fade_screen",
+        "hns_flash_flasher",
+        "hns_flash_teammate",
+        "hns_autoheal",
+        "hns_falldown_show_dmg",
+        "hns_falldown_play_sound",
+        "hns_falldown_fadescreen",
+        "hns_autojoin",
+        "hns_autojoin_immunity",
+        "hns_change_team",
+        "hns_change_team_immunity",
+        "hns_afk_control",
+        "hns_afk_timer_revive",
+        "hns_remove_breakables",
+        "hns_remove_doors",
+      },
+      (0.0, 3.0): {
+        "hns_win_sound_mode",
+        "hns_hegrenade_mode",
+        "hns_flashbang_mode",
+        "hns_flashbang_failure_notify",
+        "hns_smokegrenade_mode",
+        "hns_autoheal_mode",
+      },
+      (0.0, 2.0): {
+        "hns_flashbang_count",
+        "hns_tr_fake_knife_mode",
+      },
+      (0.0, 100.0): {"hns_flashbang_failure_chance"},
+      (1.0, 10.0): {"hns_timer"},
+      (0.0, 255.0): {
+        "hns_ct_timer_fade_screen_r",
+        "hns_ct_timer_fade_screen_g",
+        "hns_ct_timer_fade_screen_b",
+        "hns_ct_timer_fade_screen_alpha",
+        "hns_falldown_fadescreen_r",
+        "hns_falldown_fadescreen_g",
+        "hns_falldown_fadescreen_b",
+        "hns_falldown_fadescreen_alpha",
+      },
+    }
+
+    for (minimum, maximum), cvar_names in bounded_groups.items():
+      for name in cvar_names:
+        call_pattern = (
+          rf'create_cvar\("{name}"[^;]*'
+          rf'\.has_min\s*=\s*true[^;]*\.min_val\s*=\s*{minimum:.1f}[^;]*'
+          rf'\.has_max\s*=\s*true[^;]*\.max_val\s*=\s*{maximum:.1f}[^;]*;'
+        )
+        self.assertRegex(SOURCE, call_pattern, name)
+
+    for name in (
+      "hns_timer_immortal_delay",
+      "hns_autoheal_max_hp",
+      "hns_autoheal_delay",
+    ):
+      call_pattern = (
+        rf'create_cvar\("{name}"[^;]*'
+        rf'\.has_min\s*=\s*true[^;]*\.min_val\s*=\s*0\.0[^;]*;'
+      )
+      self.assertRegex(SOURCE, call_pattern, name)
 
   def test_countdown_and_fall_fades_have_independent_config_keys(self):
     expected_values = {

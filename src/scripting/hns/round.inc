@@ -73,9 +73,7 @@ fnShowRoundWinMessage(const szKey[], iRed, iGreen, iBlue) {
 }
 
 fnPlayWinSound(iWinner) {
-	new iSoundMode = clamp(get_pcvar_num(g_aCvar[CVAR_WIN_SOUND_MODE]), 0, 3);
-
-	if(iSoundMode != 3 && iSoundMode != iWinner)
+	if(g_iCvarWinSoundMode != 3 && g_iCvarWinSoundMode != iWinner)
 		return;
 
 	new szSound[MAX_SOUND_PATH_LENGTH + 1];

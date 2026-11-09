@@ -26,62 +26,96 @@ public plugin_init() {
 	register_dictionary("hns.txt");
 
 	// CVARS
-	g_aCvar[CVAR_TIMER] = register_cvar("hns_timer", "10");
-	g_aCvar[CVAR_TIMER_IMMORTAL] = register_cvar("hns_timer_immortal", "1");
-	g_aCvar[CVAR_TIMER_IMMORTAL_DELAY] = register_cvar("hns_timer_immortal_delay", "3.0");
+	new pCvar;
+	pCvar = create_cvar("hns_timer", "10", .description = "Countdown duration in seconds", .has_min = true, .min_val = 1.0, .has_max = true, .max_val = 10.0);
+	bind_pcvar_num(pCvar, g_iCvarTimer);
+	pCvar = create_cvar("hns_timer_immortal", "1", .description = "Respawn players during countdown", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarTimerImmortal);
+	pCvar = create_cvar("hns_timer_immortal_delay", "3.0", .description = "Countdown respawn delay", .has_min = true, .min_val = 0.0);
+	bind_pcvar_float(pCvar, g_fCvarTimerImmortalDelay);
 
-	g_aCvar[CVAR_TIMER_ANTIFLASH_CT] = register_cvar("hns_timer_antiflash_ct", "1");
+	pCvar = create_cvar("hns_timer_antiflash_ct", "1", .description = "Protect seekers from flash during countdown", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarTimerAntiflashCt);
 
-	g_aCvar[CVAR_CD_SOUND] = register_cvar("hns_cd_sound", "1");
-	g_aCvar[CVAR_WIN_SOUND_MODE] = register_cvar("hns_win_sound_mode", "3");
-	g_aCvar[CVAR_WIN_SOUND_HIDERS] = register_cvar("hns_win_sound_hiders", g_szHidersWinSound);
-	g_aCvar[CVAR_WIN_SOUND_SEEKERS] = register_cvar("hns_win_sound_seekers", g_szSeekersWinSound);
+	pCvar = create_cvar("hns_cd_sound", "1", .description = "Enable countdown sounds", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarCountdownSound);
+	pCvar = create_cvar("hns_win_sound_mode", "3", .description = "Winning team sound mode", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 3.0);
+	bind_pcvar_num(pCvar, g_iCvarWinSoundMode);
+	create_cvar("hns_win_sound_hiders", g_szHidersWinSound, .description = "Hider win sound path loaded during precache");
+	create_cvar("hns_win_sound_seekers", g_szSeekersWinSound, .description = "Seeker win sound path loaded during precache");
 
-	g_aCvar[CVAR_CT_TIMER_FADE_SCREEN] = register_cvar("hns_ct_timer_fade_screen", "1");
-	g_aCvar[CVAR_CT_TIMER_FADE_SCREEN_R] = register_cvar("hns_ct_timer_fade_screen_r", "0");
-	g_aCvar[CVAR_CT_TIMER_FADE_SCREEN_G] = register_cvar("hns_ct_timer_fade_screen_g", "0");
-	g_aCvar[CVAR_CT_TIMER_FADE_SCREEN_B] = register_cvar("hns_ct_timer_fade_screen_b", "0");
-	g_aCvar[CVAR_CT_TIMER_FADE_SCREEN_ALPHA] = register_cvar("hns_ct_timer_fade_screen_alpha", "150");
+	pCvar = create_cvar("hns_ct_timer_fade_screen", "1", .description = "Fade seeker screens during countdown", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarCtTimerFadeScreen);
+	pCvar = create_cvar("hns_ct_timer_fade_screen_r", "0", .description = "Countdown fade red channel", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 255.0);
+	bind_pcvar_num(pCvar, g_iCvarCtTimerFadeScreenRed);
+	pCvar = create_cvar("hns_ct_timer_fade_screen_g", "0", .description = "Countdown fade green channel", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 255.0);
+	bind_pcvar_num(pCvar, g_iCvarCtTimerFadeScreenGreen);
+	pCvar = create_cvar("hns_ct_timer_fade_screen_b", "0", .description = "Countdown fade blue channel", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 255.0);
+	bind_pcvar_num(pCvar, g_iCvarCtTimerFadeScreenBlue);
+	pCvar = create_cvar("hns_ct_timer_fade_screen_alpha", "150", .description = "Countdown fade alpha channel", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 255.0);
+	bind_pcvar_num(pCvar, g_iCvarCtTimerFadeScreenAlpha);
 
-	g_aCvar[CVAR_HEGRENADE_MODE] = register_cvar("hns_hegrenade_mode", "0");
+	pCvar = create_cvar("hns_hegrenade_mode", "0", .description = "HE grenade team mode", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 3.0);
+	bind_pcvar_num(pCvar, g_iCvarHegrenadeMode);
+	pCvar = create_cvar("hns_flashbang_mode", "1", .description = "Flashbang team mode", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 3.0);
+	bind_pcvar_num(pCvar, g_iCvarFlashbangMode);
+	pCvar = create_cvar("hns_flashbang_count", "2", .description = "Flashbang count per spawn", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 2.0);
+	bind_pcvar_num(pCvar, g_iCvarFlashbangCount);
+	pCvar = create_cvar("hns_flashbang_failure_chance", "0", .description = "Flashbang failure chance percent", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 100.0);
+	bind_pcvar_num(pCvar, g_iCvarFlashbangFailureChance);
+	pCvar = create_cvar("hns_flashbang_failure_notify", "1", .description = "Flashbang failure notification mode", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 3.0);
+	bind_pcvar_num(pCvar, g_iCvarFlashbangFailureNotify);
+	pCvar = create_cvar("hns_smokegrenade_mode", "1", .description = "Smoke grenade team mode", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 3.0);
+	bind_pcvar_num(pCvar, g_iCvarSmokegrenadeMode);
+	pCvar = create_cvar("hns_flash_flasher", "0", .description = "Allow self flash", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarFlashFlasher);
+	pCvar = create_cvar("hns_flash_teammate", "0", .description = "Allow teammate flash", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarFlashTeammate);
 
-	g_aCvar[CVAR_FLASHBANG_MODE] = register_cvar("hns_flashbang_mode", "1");
-	g_aCvar[CVAR_FLASHBANG_COUNT] = register_cvar("hns_flashbang_count", "2");
+	pCvar = create_cvar("hns_autoheal", "1", .description = "Enable delayed fall damage recovery", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarAutoheal);
+	pCvar = create_cvar("hns_autoheal_mode", "3", .description = "Fall damage recovery team mode", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 3.0);
+	bind_pcvar_num(pCvar, g_iCvarAutohealMode);
+	pCvar = create_cvar("hns_autoheal_max_hp", "60", .description = "Maximum health restored per fall", .has_min = true, .min_val = 0.0);
+	bind_pcvar_num(pCvar, g_iCvarAutohealMaxHp);
+	pCvar = create_cvar("hns_autoheal_delay", "1.5", .description = "Fall damage recovery delay", .has_min = true, .min_val = 0.0);
+	bind_pcvar_float(pCvar, g_fCvarAutohealDelay);
 
-	g_aCvar[CVAR_FLASHBANG_FAILURE_CHANCE] = register_cvar("hns_flashbang_failure_chance", "0");
-	g_aCvar[CVAR_FLASHBANG_FAILURE_NOTIFY] = register_cvar("hns_flashbang_failure_notify", "1");
+	pCvar = create_cvar("hns_falldown_show_dmg", "1", .description = "Show received fall damage", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarFalldownShowDamage);
+	pCvar = create_cvar("hns_falldown_play_sound", "1", .description = "Play fall damage sound", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarFalldownPlaySound);
+	pCvar = create_cvar("hns_falldown_fadescreen", "1", .description = "Show fall damage screen fade", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarFalldownFadeScreen);
+	pCvar = create_cvar("hns_falldown_fadescreen_r", "255", .description = "Fall fade red channel", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 255.0);
+	bind_pcvar_num(pCvar, g_iCvarFalldownFadeScreenRed);
+	pCvar = create_cvar("hns_falldown_fadescreen_g", "0", .description = "Fall fade green channel", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 255.0);
+	bind_pcvar_num(pCvar, g_iCvarFalldownFadeScreenGreen);
+	pCvar = create_cvar("hns_falldown_fadescreen_b", "0", .description = "Fall fade blue channel", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 255.0);
+	bind_pcvar_num(pCvar, g_iCvarFalldownFadeScreenBlue);
+	pCvar = create_cvar("hns_falldown_fadescreen_alpha", "80", .description = "Fall fade alpha channel", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 255.0);
+	bind_pcvar_num(pCvar, g_iCvarFalldownFadeScreenAlpha);
 
-	g_aCvar[CVAR_SMOKEGRENADE_MODE] = register_cvar("hns_smokegrenade_mode", "1");
+	pCvar = create_cvar("hns_autojoin", "1", .description = "Enable automatic team join", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarAutojoin);
+	pCvar = create_cvar("hns_autojoin_immunity", "1", .description = "Enable autojoin immunity", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarAutojoinImmunity);
+	pCvar = create_cvar("hns_autojoin_immunity_flag", "t", .description = "Autojoin immunity access flag");
+	bind_pcvar_string(pCvar, g_szCvarAutojoinImmunityFlag, charsmax(g_szCvarAutojoinImmunityFlag));
 
-	g_aCvar[CVAR_FLASH_FLASHER] = register_cvar("hns_flash_flasher", "0");
-	g_aCvar[CVAR_FLASH_TEAMMATE] = register_cvar("hns_flash_teammate", "0");
+	pCvar = create_cvar("hns_change_team", "0", .description = "Allow unrestricted team changes", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarChangeTeam);
+	pCvar = create_cvar("hns_change_team_immunity", "1", .description = "Enable team change immunity", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarChangeTeamImmunity);
+	pCvar = create_cvar("hns_change_team_immunity_flag", "t", .description = "Team change immunity access flag");
+	bind_pcvar_string(pCvar, g_szCvarChangeTeamImmunityFlag, charsmax(g_szCvarChangeTeamImmunityFlag));
 
-	g_aCvar[CVAR_AUTOHEAL] = register_cvar("hns_autoheal", "1");
-	g_aCvar[CVAR_AUTOHEAL_MODE] = register_cvar("hns_autoheal_mode", "3");
-	g_aCvar[CVAR_AUTOHEAL_MAX_HP] = register_cvar("hns_autoheal_max_hp", "60");
-	g_aCvar[CVAR_AUTOHEAL_DELAY] = register_cvar("hns_autoheal_delay", "1.5");
-
-	g_aCvar[CVAR_FALLDOWN_SHOW_DMG] = register_cvar("hns_falldown_show_dmg", "1");
-	g_aCvar[CVAR_FALLDOWN_PLAY_SOUND] = register_cvar("hns_falldown_play_sound", "1");
-
-	g_aCvar[CVAR_FALLDOWN_FADESCREEN] = register_cvar("hns_falldown_fadescreen", "1");
-	g_aCvar[CVAR_FALLDOWN_FADESCREEN_R] = register_cvar("hns_falldown_fadescreen_r", "255");
-	g_aCvar[CVAR_FALLDOWN_FADESCREEN_G] = register_cvar("hns_falldown_fadescreen_g", "0");
-	g_aCvar[CVAR_FALLDOWN_FADESCREEN_B] = register_cvar("hns_falldown_fadescreen_b", "0");
-	g_aCvar[CVAR_FALLDOWN_FADESCREEN_ALPHA] = register_cvar("hns_falldown_fadescreen_alpha", "80");
-
-	g_aCvar[CVAR_AUTOJOIN] = register_cvar("hns_autojoin", "1");
-	g_aCvar[CVAR_AUTOJOIN_IMMUNITY] = register_cvar("hns_autojoin_immunity", "1");
-	g_aCvar[CVAR_AUTOJOIN_IMMUNITY_FLAG] = register_cvar("hns_autojoin_immunity_flag", "t");
-
-	g_aCvar[CVAR_CHANGE_TEAM] = register_cvar("hns_change_team", "0");
-	g_aCvar[CVAR_CHANGE_TEAM_IMMUNITY] = register_cvar("hns_change_team_immunity", "1");
-	g_aCvar[CVAR_CHANGE_TEAM_IMMUNITY_FLAG] = register_cvar("hns_change_team_immunity_flag", "t");
-
-	g_aCvar[CVAR_AFK_CONTROL] = register_cvar("hns_afk_control", "1");
-	g_aCvar[CVAR_AFK_CONTROL_TIMER_REVIVE] = register_cvar("hns_afk_timer_revive", "1");
-
-	g_aCvar[CVAR_TR_FAKE_KNIFE_MODE] = register_cvar("hns_tr_fake_knife_mode", "1");
+	pCvar = create_cvar("hns_afk_control", "1", .description = "Enable AFK spectator commands", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarAfkControl);
+	pCvar = create_cvar("hns_afk_timer_revive", "1", .description = "Respawn players returning during countdown", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarAfkTimerRevive);
+	pCvar = create_cvar("hns_tr_fake_knife_mode", "1", .description = "Hider fake knife mode", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 2.0);
+	bind_pcvar_num(pCvar, g_iCvarTrFakeKnifeMode);
 
 	// EVENTS
 	register_event("HLTV", "fnRoundBeforeFreezeTime", "a", "1=0", "2=0");
@@ -187,8 +221,10 @@ public fwdThink(ent) {
 	return FMRES_IGNORED;
 }
 public plugin_precache() {
-	g_aCvar[CVAR_REMOVE_BREAKABLES] = register_cvar("hns_remove_breakables", "1");
-	g_aCvar[CVAR_REMOVE_DOORS] = register_cvar("hns_remove_doors", "1");
+	new pCvar = create_cvar("hns_remove_breakables", "1", .description = "Remove breakable entities", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarRemoveBreakables);
+	pCvar = create_cvar("hns_remove_doors", "1", .description = "Remove door entities", .has_min = true, .min_val = 0.0, .has_max = true, .max_val = 1.0);
+	bind_pcvar_num(pCvar, g_iCvarRemoveDoors);
 	fnLoadWinSoundConfig();
 	fnPrecacheWinSounds();
 

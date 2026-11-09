@@ -4,7 +4,7 @@
 #define _hns_team_flow_included
 
 public fnSayAfk(id) {
-	if(get_pcvar_num(g_aCvar[CVAR_AFK_CONTROL]) == 0) {
+	if(g_iCvarAfkControl == 0) {
 		ChatColorKey(id, "HNS_FEATURE_DISABLED");
 		return PLUGIN_HANDLED;
 	}
@@ -31,7 +31,7 @@ public fnSayAfk(id) {
 }
 
 public fnSayPlay(id) {
-	if(get_pcvar_num(g_aCvar[CVAR_AFK_CONTROL]) == 0) {
+	if(g_iCvarAfkControl == 0) {
 		ChatColorKey(id, "HNS_FEATURE_DISABLED");
 		return PLUGIN_HANDLED;
 	}
@@ -43,7 +43,7 @@ public fnSayPlay(id) {
 
 	cs_set_user_team(id, g_aIsAfkTeam[id]);
 
-	if(get_pcvar_num(g_aCvar[CVAR_AFK_CONTROL_TIMER_REVIVE]) == 1 && g_iTimer) {
+	if(g_iCvarAfkTimerRevive == 1 && g_iTimer) {
 		remove_task(TASK_AFK_REVIVE + id);
 		set_task(0.2, "fnAfkControlRevive", TASK_AFK_REVIVE + id);
 	}
@@ -98,16 +98,13 @@ public msgVguiMenu(msgid, dest, id) {
 }
 
 bool:fnBeAutojoin(id) {
-	new szImmunityFlag[2];
-	get_pcvar_string(g_aCvar[CVAR_AUTOJOIN_IMMUNITY_FLAG], szImmunityFlag, 1);
-
-	new iImmunityFlag = read_flags(szImmunityFlag);
+	new iImmunityFlag = read_flags(g_szCvarAutojoinImmunityFlag);
 
 	return (
-		get_pcvar_num(g_aCvar[CVAR_AUTOJOIN]) == 1 &&
+		g_iCvarAutojoin == 1 &&
 		!get_user_team(id) &&
 		!task_exists(TASK_FORCE_JOIN + id) &&
-		(get_pcvar_num(g_aCvar[CVAR_AUTOJOIN_IMMUNITY]) == 0 || !(get_user_flags(id) & iImmunityFlag))
+		(g_iCvarAutojoinImmunity == 0 || !(get_user_flags(id) & iImmunityFlag))
 	);
 }
 
@@ -183,13 +180,11 @@ fnHandleTeamChange(id) {
 		}
 	}
 
-	if(get_pcvar_num(g_aCvar[CVAR_CHANGE_TEAM]) == 1)
+	if(g_iCvarChangeTeam == 1)
 		return PLUGIN_CONTINUE;
 
-	if(get_pcvar_num(g_aCvar[CVAR_CHANGE_TEAM_IMMUNITY]) == 1) {
-		new szImmunityFlag[2];
-		get_pcvar_string(g_aCvar[CVAR_CHANGE_TEAM_IMMUNITY_FLAG], szImmunityFlag, 1);
-		new iImmunityFlag = read_flags(szImmunityFlag);
+	if(g_iCvarChangeTeamImmunity == 1) {
+		new iImmunityFlag = read_flags(g_szCvarChangeTeamImmunityFlag);
 
 		if(get_user_flags(id) & iImmunityFlag)
 			return PLUGIN_CONTINUE;

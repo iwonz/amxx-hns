@@ -9,7 +9,7 @@ new g_iTimer = 0;
 new g_TimerEntity;
 
 public fnToggleCountdownSound(id) {
-	if(get_pcvar_num(g_aCvar[CVAR_CD_SOUND]) == 0) {
+	if(g_iCvarCountdownSound == 0) {
 		ChatColorKey(id, "HNS_COUNTDOWN_SOUND_SERVER_DISABLED");
 		return PLUGIN_HANDLED;
 	}
@@ -29,19 +29,16 @@ public fnDeath() {
 	new iVictim = read_data(2);
 
 	if(
-		get_pcvar_num(g_aCvar[CVAR_TIMER_IMMORTAL]) == 1 &&
+		g_iCvarTimerImmortal == 1 &&
 		g_bStart &&
 		g_iTimer > 0
 	) {
-		new Float:fReviveDelay;
-		fReviveDelay = get_pcvar_float(g_aCvar[CVAR_TIMER_IMMORTAL_DELAY]);
-
 		new iReviveTaskID = TASK_REVIVE + iVictim;
 
 		if(task_exists(iReviveTaskID))
 			remove_task(iReviveTaskID);
 
-		set_task(fReviveDelay, "fnRevive", iReviveTaskID);
+		set_task(g_fCvarTimerImmortalDelay, "fnRevive", iReviveTaskID);
 	}
 }
 
@@ -72,7 +69,7 @@ public fnRoundBeforeFreezeTime() {
 
 public fnRoundAfterFreezeTime() {
 	if(g_bStart) {
-		g_iTimer = clamp(get_pcvar_num(g_aCvar[CVAR_TIMER]), 1, 10);
+		g_iTimer = g_iCvarTimer;
 		g_bCountdownActive = true;
 		set_pev(g_TimerEntity, pev_nextthink, get_gametime());
 	}
@@ -88,19 +85,19 @@ public fnTimer(ent) {
 				if(get_user_team(aPlayers[i]) == 2) {
 					set_pev(aPlayers[i], pev_flags, pev(aPlayers[i], pev_flags) | FL_FROZEN);
 
-					if(get_pcvar_num(g_aCvar[CVAR_CT_TIMER_FADE_SCREEN]) == 1) {
+					if(g_iCvarCtTimerFadeScreen == 1) {
 						fnMakeScreenFade(
 							aPlayers[i],
-							get_pcvar_num(g_aCvar[CVAR_CT_TIMER_FADE_SCREEN_R]),
-							get_pcvar_num(g_aCvar[CVAR_CT_TIMER_FADE_SCREEN_G]),
-							get_pcvar_num(g_aCvar[CVAR_CT_TIMER_FADE_SCREEN_B]),
-							get_pcvar_num(g_aCvar[CVAR_CT_TIMER_FADE_SCREEN_ALPHA]),
+							g_iCvarCtTimerFadeScreenRed,
+							g_iCvarCtTimerFadeScreenGreen,
+							g_iCvarCtTimerFadeScreenBlue,
+							g_iCvarCtTimerFadeScreenAlpha,
 							2
 						);
 					}
 				}
 
-				if(get_pcvar_num(g_aCvar[CVAR_CD_SOUND]) == 1 && g_aCountdownSound[aPlayers[i]])
+				if(g_iCvarCountdownSound == 1 && g_aCountdownSound[aPlayers[i]])
 					client_cmd(aPlayers[i], "spk hns/countdown/%d.wav", g_iTimer);
 
 				ClearDHUDMessages(aPlayers[i]);

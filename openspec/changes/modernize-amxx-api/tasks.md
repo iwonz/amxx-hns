@@ -14,9 +14,9 @@
 
 ## 3. Перевести Cvar на create/bind API
 
-- [ ] 3.1 Обновить source/docs regression tests: извлекать Cvar из `create_cvar`, требовать границы и bound runtime state, запрещать `register_cvar`/`get_pcvar_*`; запустить `python3 -B -m unittest discover -s tests -v` и подтвердить ожидаемое падение
-- [ ] 3.2 Зарегистрировать существующие Cvar через `create_cvar`, добавить documented bounds, bound globals для runtime чисел/float/flag strings и сохранить precache-owned win sound buffers; обновить все runtime consumers и README без переименования Cvar
-- [ ] 3.3 Проверить зелёный `python3 -B -m unittest discover -s tests -v`, выполнить AMXX 1.10 docker-компиляцию из пункта 2.3 и зафиксировать изменение коммитом `Modernize Cvar registration and binding` после `git diff --check`
+- [x] 3.1 Обновить source/docs regression tests: извлекать Cvar из `create_cvar`, требовать границы и bound runtime state, запрещать `register_cvar`/`get_pcvar_*`; запустить `python3 -B -m unittest discover -s tests -v` и подтвердить ожидаемое падение
+- [x] 3.2 Зарегистрировать существующие Cvar через `create_cvar`, добавить documented bounds, bound globals для runtime чисел/float/flag strings и сохранить precache-owned win sound buffers; обновить все runtime consumers и README без переименования Cvar
+- [x] 3.3 Проверить зелёный `python3 -B -m unittest discover -s tests -v`, выполнить AMXX 1.10 docker-компиляцию из пункта 2.3 и зафиксировать изменение коммитом `Modernize Cvar registration and binding` после `git diff --check`
 
 ## 4. Обновить lifecycle, события и штатные helpers
 

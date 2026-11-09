@@ -50,17 +50,14 @@ fnPrepareFlashbang(ent) {
 		g_iFlasherTeam = 0;
 	}
 
-	new iFailureChance = clamp(get_pcvar_num(g_aCvar[CVAR_FLASHBANG_FAILURE_CHANCE]), 0, 100);
-	g_bFlashFailed = iFailureChance > 0 && random_num(1, 100) <= iFailureChance;
+	g_bFlashFailed = g_iCvarFlashbangFailureChance > 0 && random_num(1, 100) <= g_iCvarFlashbangFailureChance;
 
 	if(g_bFlashFailed && is_user_connected(iOwner))
 		fnNotifyFlashbangFailure(iOwner);
 }
 
 fnNotifyFlashbangFailure(id) {
-	new iNotifyMode = clamp(get_pcvar_num(g_aCvar[CVAR_FLASHBANG_FAILURE_NOTIFY]), 0, 3);
-
-	switch(iNotifyMode) {
+	switch(g_iCvarFlashbangFailureNotify) {
 		case 1:
 			ChatColorKey(id, "HNS_FLASH_FAILED_CHAT");
 		case 2: {
@@ -79,13 +76,13 @@ public msgScreenFade(msgId, msgDest, msgEnt) {
 	if(g_bFlashFailed)
 		return PLUGIN_HANDLED;
 
-	if(g_iTimer && get_pcvar_num(g_aCvar[CVAR_TIMER_ANTIFLASH_CT]) == 1 && get_user_team(msgEnt) == 2)
+	if(g_iTimer && g_iCvarTimerAntiflashCt == 1 && get_user_team(msgEnt) == 2)
 		return PLUGIN_HANDLED;
 
-	if(g_iFlasher == msgEnt && get_pcvar_num(g_aCvar[CVAR_FLASH_FLASHER]) == 0)
+	if(g_iFlasher == msgEnt && g_iCvarFlashFlasher == 0)
 		return PLUGIN_HANDLED;
 
-	if(g_iFlasherTeam == get_user_team(msgEnt) && get_pcvar_num(g_aCvar[CVAR_FLASH_TEAMMATE]) == 0)
+	if(g_iFlasherTeam == get_user_team(msgEnt) && g_iCvarFlashTeammate == 0)
 		return PLUGIN_HANDLED;
 
 	return PLUGIN_CONTINUE;

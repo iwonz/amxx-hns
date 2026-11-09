@@ -29,14 +29,14 @@ public fwdEntitySpawn(ent) {
 		}
 	}
 
-	if(get_pcvar_num(g_aCvar[CVAR_REMOVE_DOORS])) {
+	if(g_iCvarRemoveDoors) {
 		if(equal(szClass, "func_door") || equal(szClass, "func_door_rotating")) {
 			engfunc(EngFunc_RemoveEntity, ent);
 			return 4;
 		}
 	}
 
-	if(get_pcvar_num(g_aCvar[CVAR_REMOVE_BREAKABLES]) && equal(szClass, "func_breakable")) {
+	if(g_iCvarRemoveBreakables && equal(szClass, "func_breakable")) {
 		engfunc(EngFunc_RemoveEntity, ent);
 		return 4;
 	}

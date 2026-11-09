@@ -18,7 +18,7 @@ SPECS = "\n".join(path.read_text(encoding="utf-8") for path in SPEC_FILES)
 
 class ProjectDocumentationTests(unittest.TestCase):
   def test_every_registered_cvar_is_documented_for_users_and_in_specs(self):
-    cvars = set(re.findall(r'register_cvar\("([^"]+)"', SOURCE))
+    cvars = set(re.findall(r'create_cvar\("([^"]+)"', SOURCE))
 
     self.assertGreater(len(cvars), 0)
     for cvar in sorted(cvars):

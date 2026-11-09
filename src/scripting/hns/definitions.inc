@@ -11,66 +11,53 @@
 #define MAX_TRACKED_ENTITIES 2049
 #define MAX_SOUND_PATH_LENGTH 63
 
-enum _:g_eCVARS {
-	CVAR_TIMER,
-	CVAR_TIMER_IMMORTAL,
-	CVAR_TIMER_IMMORTAL_DELAY,
+new g_iCvarTimer;
+new g_iCvarTimerImmortal;
+new Float:g_fCvarTimerImmortalDelay;
+new g_iCvarTimerAntiflashCt;
 
-	CVAR_TIMER_ANTIFLASH_CT,
+new g_iCvarCountdownSound;
+new g_iCvarWinSoundMode;
 
-	CVAR_CD_SOUND,
-	CVAR_WIN_SOUND_MODE,
-	CVAR_WIN_SOUND_HIDERS,
-	CVAR_WIN_SOUND_SEEKERS,
+new g_iCvarCtTimerFadeScreen;
+new g_iCvarCtTimerFadeScreenRed;
+new g_iCvarCtTimerFadeScreenGreen;
+new g_iCvarCtTimerFadeScreenBlue;
+new g_iCvarCtTimerFadeScreenAlpha;
 
-	CVAR_CT_TIMER_FADE_SCREEN,
-	CVAR_CT_TIMER_FADE_SCREEN_R,
-	CVAR_CT_TIMER_FADE_SCREEN_G,
-	CVAR_CT_TIMER_FADE_SCREEN_B,
-	CVAR_CT_TIMER_FADE_SCREEN_ALPHA,
+new g_iCvarRemoveBreakables;
+new g_iCvarRemoveDoors;
 
-	CVAR_REMOVE_BREAKABLES,
-	CVAR_REMOVE_DOORS,
+new g_iCvarHegrenadeMode;
+new g_iCvarFlashbangMode;
+new g_iCvarFlashbangCount;
+new g_iCvarFlashbangFailureChance;
+new g_iCvarFlashbangFailureNotify;
+new g_iCvarSmokegrenadeMode;
+new g_iCvarFlashFlasher;
+new g_iCvarFlashTeammate;
 
-	CVAR_HEGRENADE_MODE,
+new g_iCvarAutoheal;
+new g_iCvarAutohealMode;
+new g_iCvarAutohealMaxHp;
+new Float:g_fCvarAutohealDelay;
 
-	CVAR_FLASHBANG_MODE,
-	CVAR_FLASHBANG_COUNT,
+new g_iCvarFalldownShowDamage;
+new g_iCvarFalldownPlaySound;
+new g_iCvarFalldownFadeScreen;
+new g_iCvarFalldownFadeScreenRed;
+new g_iCvarFalldownFadeScreenGreen;
+new g_iCvarFalldownFadeScreenBlue;
+new g_iCvarFalldownFadeScreenAlpha;
 
-	CVAR_FLASHBANG_FAILURE_CHANCE,
-	CVAR_FLASHBANG_FAILURE_NOTIFY,
+new g_iCvarAutojoin;
+new g_iCvarAutojoinImmunity;
+new g_szCvarAutojoinImmunityFlag[2];
 
-	CVAR_SMOKEGRENADE_MODE,
+new g_iCvarChangeTeam;
+new g_iCvarChangeTeamImmunity;
+new g_szCvarChangeTeamImmunityFlag[2];
 
-	CVAR_FLASH_FLASHER,
-	CVAR_FLASH_TEAMMATE,
-
-	CVAR_AUTOHEAL,
-	CVAR_AUTOHEAL_MODE,
-	CVAR_AUTOHEAL_MAX_HP,
-	CVAR_AUTOHEAL_DELAY,
-
-	CVAR_FALLDOWN_SHOW_DMG,
-	CVAR_FALLDOWN_PLAY_SOUND,
-
-	CVAR_FALLDOWN_FADESCREEN,
-	CVAR_FALLDOWN_FADESCREEN_R,
-	CVAR_FALLDOWN_FADESCREEN_G,
-	CVAR_FALLDOWN_FADESCREEN_B,
-	CVAR_FALLDOWN_FADESCREEN_ALPHA,
-
-	CVAR_AUTOJOIN,
-	CVAR_AUTOJOIN_IMMUNITY,
-	CVAR_AUTOJOIN_IMMUNITY_FLAG,
-
-	CVAR_CHANGE_TEAM,
-	CVAR_CHANGE_TEAM_IMMUNITY,
-	CVAR_CHANGE_TEAM_IMMUNITY_FLAG,
-
-	CVAR_AFK_CONTROL,
-	CVAR_AFK_CONTROL_TIMER_REVIVE,
-
-	CVAR_TR_FAKE_KNIFE_MODE
-};
-
-new g_aCvar[g_eCVARS];
+new g_iCvarAfkControl;
+new g_iCvarAfkTimerRevive;
+new g_iCvarTrFakeKnifeMode;
