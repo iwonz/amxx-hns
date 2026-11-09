@@ -75,6 +75,35 @@ class ProjectDocumentationTests(unittest.TestCase):
         continue
       self.assertTrue((ROOT / link).exists(), f"Broken README link: {link}")
 
+  def test_readme_documents_semver_release_workflow(self):
+    for required_text in (
+      "https://github.com/iwonz/amxx-hns/releases",
+      "src/scripting/hns/version.inc",
+      "MAJOR",
+      "MINOR",
+      "PATCH",
+      "prerelease",
+      "SHA256SUMS",
+      "sha256sum -c SHA256SUMS",
+      "python3 scripts/release.py version",
+      'python3 scripts/release.py verify-tag --tag "v$VERSION"',
+      'git commit -m "Release v$VERSION"',
+      "git push origin master",
+      'git tag -a "v$VERSION"',
+      'git push origin "v$VERSION"',
+    ):
+      self.assertIn(required_text, README)
+
+    release_steps = (
+      'git commit -m "Release v$VERSION"',
+      "git push origin master",
+      'git tag -a "v$VERSION"',
+      'git push origin "v$VERSION"',
+    )
+    step_positions = [README.index(step) for step in release_steps]
+    self.assertEqual(sorted(step_positions), step_positions)
+    self.assertNotIn("Текущая версия плагина:", README)
+
 
 if __name__ == "__main__":
   unittest.main()

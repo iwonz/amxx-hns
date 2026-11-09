@@ -21,10 +21,10 @@
 
 ## 4. Документация и интеграция
 
-- [ ] 4.1 До правки README расширить documentation tests требованиями к ссылке на Releases, единому файлу версии, правилам MAJOR/MINOR/PATCH, prerelease и точной последовательности `commit → push → annotated tag → push tag`; подтвердить целевое падение `python3 -B -m unittest tests.test_project_docs -v`.
-- [ ] 4.2 Обновить `README.md`: убрать вручную дублируемую текущую версию, описать установку готового Release archive, проверку `SHA256SUMS`, изменение версии, локальные release-helper команды и выпуск тега; проверить `python3 -B -m unittest tests.test_project_docs -v` и разрешение всех локальных Markdown-ссылок.
-- [ ] 4.3 Выполнить полный gate `python3 -B -m unittest discover -s tests -v`, `npx --yes @fission-ai/openspec@1.14.2 validate --all --strict`, `git diff --check` и повторную компиляцию официальным AMX Mod X 1.10.0.5487; дополнительно открыть собранный ZIP и сверить оба SHA-256 с `SHA256SUMS`.
-- [ ] 4.4 Зафиксировать README и documentation tests отдельным атомарным commit; проверить итоговую историю и чистое состояние через `git log --oneline -5` и `git status --short`.
+- [x] 4.1 До правки README расширить documentation tests требованиями к ссылке на Releases, единому файлу версии, правилам MAJOR/MINOR/PATCH, prerelease и точной последовательности `commit → push → annotated tag → push tag`; подтвердить целевое падение `python3 -B -m unittest tests.test_project_docs -v`.
+- [x] 4.2 Обновить `README.md`: убрать вручную дублируемую текущую версию, описать установку готового Release archive, проверку `SHA256SUMS`, изменение версии, локальные release-helper команды и выпуск тега; проверить `python3 -B -m unittest tests.test_project_docs -v` и разрешение всех локальных Markdown-ссылок.
+- [x] 4.3 Выполнить полный gate `python3 -B -m unittest discover -s tests -v`, `npx --yes @fission-ai/openspec@1.14.2 validate --all --strict`, `git diff --check` и повторную компиляцию официальным AMX Mod X 1.10.0.5487; дополнительно открыть собранный ZIP и сверить оба SHA-256 с `SHA256SUMS`.
+- [x] 4.4 Зафиксировать README и documentation tests отдельным атомарным commit; проверить итоговую историю и чистое состояние через `git log --oneline -5` и `git status --short`.
 
 ## Workflow follow-up
 

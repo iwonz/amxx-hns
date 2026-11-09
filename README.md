@@ -4,7 +4,7 @@
 
 Плагин управляет основным циклом раунда, командами игроков, экипировкой, правилами Flashbang, уроном от падения, автоматическим лечением и сообщениями. Это не готовая серверная сборка: карты, баланс, движение, anti-frag, статистика и дополнительные игровые механики подключаются отдельными AMXX-плагинами.
 
-Текущая версия плагина: `1.0`.
+[Актуальные версии и готовые сборки](https://github.com/iwonz/amxx-hns/releases) публикуются в GitHub Releases. Версия внутри `hns.amxx`, имя тега и Release всегда должны совпадать.
 
 ## Как проходит раунд
 
@@ -46,9 +46,23 @@
 
 ## Установка
 
-### 1. Скомпилируйте плагин
+### 1. Получите файлы плагина
 
-Откройте каталог `addons/amxmodx/scripting` из пакета AMX Mod X и выполните:
+Рекомендуемый вариант — открыть [GitHub Releases](https://github.com/iwonz/amxx-hns/releases) и скачать из нужного стабильного выпуска три assets:
+
+- `hns-v<version>.zip` — готовая структура сервера;
+- `hns.amxx` — отдельный скомпилированный плагин;
+- `SHA256SUMS` — контрольные суммы обоих файлов.
+
+Положите три файла в один каталог и проверьте их до установки:
+
+```sh
+sha256sum -c SHA256SUMS
+```
+
+На macOS используйте `shasum -a 256 -c SHA256SUMS`. Обе строки должны завершиться статусом `OK`. После этого распакуйте `hns-v<version>.zip` непосредственно в `<server>/cstrike`: архив уже содержит `addons/amxmodx/...` и `sound/hns/...`.
+
+Если готовый Release использовать нельзя, соберите плагин из исходников. Откройте каталог `addons/amxmodx/scripting` из официального пакета AMX Mod X 1.10 и выполните:
 
 ```sh
 ./amxxpc <repo>/src/scripting/hns.sma -iinclude -o<repo>/hns.amxx
@@ -60,13 +74,13 @@
 amxxpc.exe <repo>\src\scripting\hns.sma -iinclude -o<repo>\hns.amxx
 ```
 
-Замените `<repo>` абсолютным путём к клону этого репозитория. Успешная сборка создаст `hns.amxx` без предупреждений AMX Mod X 1.10.
+Замените `<repo>` абсолютным путём к клону репозитория. Успешная сборка создаст `hns.amxx` без предупреждений AMX Mod X 1.10.
 
 Не отделяйте `src/scripting/hns.sma` от каталога `src/scripting/hns/`: основной файл подключает оттуда внутренние `.inc`. Компилировать нужно только `hns.sma`; отдельные `.inc` не являются самостоятельными плагинами и не копируются на игровой сервер.
 
-### 2. Скопируйте файлы на сервер
+### 2. Разместите файлы на сервере
 
-Пути назначения указаны относительно `<server>/cstrike`.
+При установке готового ZIP эти пути уже созданы. Для ручной сборки скопируйте файлы самостоятельно; пути назначения указаны относительно `<server>/cstrike`.
 
 | Из репозитория | На сервере |
 | --- | --- |
@@ -237,9 +251,12 @@ AMX Mod X-флаги задаются буквами; `t` — пользоват
 ```text
 src/scripting/hns.sma       composition root и единственная точка компиляции
 src/scripting/hns/          внутренние модули, собираемые в тот же hns.amxx
+src/scripting/hns/version.inc единственный источник SemVer-версии плагина
 src/configs/hns.cfg         поставляемая конфигурация, кодировка CP1251
 src/data/lang/hns.txt       словарь RU/EN, UTF-8
 src/sound/hns/              игровые WAV-файлы
+scripts/release.py          проверка версии, тега и сборка release assets
+.github/workflows/release.yml проверенная сборка и публикация GitHub Release
 tests/                      регрессионные проверки исходника и документации
 openspec/specs/             спецификации актуального поведения
 openspec/changes/           активные и архивные OpenSpec-изменения
@@ -259,6 +276,7 @@ openspec/changes/           активные и архивные OpenSpec-изм
 | `round.inc` | Завершение раунда, сообщения и звуки победы. |
 | `countdown.inc` | Подготовительный отсчёт, freeze и revive. |
 | `flashbang.inc` | Отслеживание Flashbang, отказ гранаты и правила ослепления. |
+| `version.inc` | Единственная Pawn-константа версии в формате SemVer. |
 
 Все `.inc` имеют общее пространство имён Pawn и являются внутренними частями одного плагина. Публичных natives/forwards или стабильного include API для сторонних плагинов эта структура не добавляет.
 
@@ -274,7 +292,53 @@ python3 -B -m unittest discover -s tests -v
 git diff --check
 ```
 
-Перед релизом также скомпилируйте только `hns.sma` официальным компилятором AMX Mod X 1.10; каталог `src/scripting/hns/` должен оставаться рядом с ним.
+Перед релизом также скомпилируйте только `hns.sma` официальным компилятором AMX Mod X 1.10; каталог `src/scripting/hns/` должен оставаться рядом с ним. Отдельный `dhudmessage.inc` не нужен: DHUD natives входят в официальный `amxmodx.inc`.
+
+## Версионирование и релизы
+
+Единственный источник номера версии — `src/scripting/hns/version.inc`, константа `HNS_VERSION`. Не дублируйте номер вручную в `hns.sma`, README или workflow: helper читает его из Pawn include, а GitHub Actions проверяет точное совпадение с тегом.
+
+Проект использует полный SemVer 2.0.0:
+
+- повышайте **MAJOR**, если выпуск несовместим с прежней установкой, конфигурацией или обещанным поведением;
+- повышайте **MINOR** для обратно совместимой функции или нового Cvar;
+- повышайте **PATCH** для обратно совместимого исправления;
+- prerelease записывается после дефиса, например `2.0.0-rc.1`;
+- build metadata после `+` допустима, но не заменяет повышение PATCH для новой поставки.
+
+Проверить текущий источник версии и предполагаемый тег локально:
+
+```sh
+python3 scripts/release.py version
+VERSION=$(python3 scripts/release.py version)
+python3 scripts/release.py verify-tag --tag "v$VERSION"
+```
+
+После компиляции можно собрать те же assets, которые публикует CI:
+
+```sh
+python3 scripts/release.py package \
+  --plugin build/hns.amxx \
+  --output-dir build/release
+```
+
+### Выпуск новой версии
+
+Сначала измените только `HNS_VERSION`, завершите OpenSpec change и прогоните тесты, strict validation, `git diff --check` и официальную AMXX-компиляцию. Затем выполняйте операции именно в таком порядке:
+
+```sh
+VERSION=$(python3 scripts/release.py version)
+python3 scripts/release.py verify-tag --tag "v$VERSION"
+git add src/scripting/hns/version.inc
+git commit -m "Release v$VERSION"
+git push origin master
+git tag -a "v$VERSION" -m "Release v$VERSION"
+git push origin "v$VERSION"
+```
+
+Сначала commit должен попасть в `master`, и только затем annotated tag создаётся на этом проверенном commit. Не перемещайте уже опубликованный тег и не переиспользуйте его номер: исправление выпускается новой PATCH-версией.
+
+Push совпадающего `v<SemVer>` запускает `.github/workflows/release.yml`. Read-only job повторно проверяет тег, тесты, OpenSpec, SHA-256 официального AMX Mod X 1.10.0.5487, компиляцию и пакет. Только после его успеха отдельный job с `contents: write` создаёт GitHub Release, прикладывает ZIP, `hns.amxx`, `SHA256SUMS` и формирует release notes. Тег с prerelease-компонентом публикуется как GitHub prerelease; обычный push в ветку Release не создаёт.
 
 ## Работа через OpenSpec
 
