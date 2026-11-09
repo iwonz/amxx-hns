@@ -1,0 +1,46 @@
+schema: spec-driven
+
+context: |
+  Language: Russian.
+  All OpenSpec artifacts must be written in Russian.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+
+  Project: Hide N Seek: Ultimate, a Counter-Strike 1.6 game-mode core implemented as one AMX Mod X Pawn plugin.
+  Target and verified toolchain: AMX Mod X 1.10.
+  Main source: src/scripting/hns.sma.
+  Shipped configuration: src/configs/hns.cfg in CP1251.
+  Player-facing text: src/data/lang/hns.txt in UTF-8 with matching [ru] and [en] keys.
+  Regression tests: python3 -B -m unittest discover -s tests -v.
+
+  openspec/specs describes current shipped behavior, not aspirations.
+  Product behavior, bug fixes, Cvars, assets, commands, and compatibility changes must be developed through an OpenSpec change.
+  Keep the core focused: anti-frag, movement systems, statistics, maps, persistence, and admin tooling are separate plugins unless a reviewed change explicitly revises the core boundary.
+  Do not hardcode player-facing text in Pawn.
+  A custom sound must be precached before use and therefore normally requires a map change.
+
+rules:
+  proposal:
+    - State the player/server problem, observable behavior change, compatibility impact, and explicit out-of-scope items.
+    - Name every affected capability spec and every added or changed Cvar, chat command, asset, or language key.
+  specs:
+    - Describe final externally observable behavior and important engine lifecycle constraints.
+    - Include scenarios for disabled Cvars, round transitions, disconnects, spectators, and invalid values when relevant.
+    - Keep registered fallback values distinct from values supplied by hns.cfg when they differ.
+  design:
+    - Identify AMXX events, messages, Ham hooks, Fakemeta forwards, task IDs, precache timing, and cleanup paths affected by the change.
+    - Call out performance impact for logic executed per player, per frame, per message, or per entity think.
+    - Explain localization, configuration compatibility, and failure behavior.
+  tasks:
+    - Use atomic tasks that update implementation, regression tests, specs, README, config, and language resources together when applicable.
+    - Include exact verification commands and an AMX Mod X 1.10 compilation step for Pawn changes.
+
+operations:
+  apply:
+    guidance:
+      - Preserve unrelated user changes and the CP1251 encoding of src/configs/hns.cfg.
+      - Add or update a regression test before considering a behavior change complete.
+      - Never add hardcoded player-facing text to src/scripting/hns.sma.
+  archive:
+    guidance:
+      - Require passing unit tests, strict OpenSpec validation, git diff --check, and successful AMX Mod X 1.10 compilation for Pawn changes.
+      - Ensure main specs and README describe the implemented state before archiving.
