@@ -355,6 +355,7 @@ class ReleaseVersioningTests(unittest.TestCase):
 
     for release_contract in (
       'gh release create "$GITHUB_REF_NAME"',
+      '--repo "$GITHUB_REPOSITORY"',
       "--verify-tag",
       "--generate-notes",
       "--prerelease",

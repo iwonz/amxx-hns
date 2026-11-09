@@ -127,6 +127,7 @@ jobs:
             "build/release/hns-v${VERSION}.zip#Ready-to-install server package" \
             "build/release/hns.amxx#Compiled AMX Mod X plugin" \
             "build/release/SHA256SUMS#SHA-256 checksums" \
+            --repo "$GITHUB_REPOSITORY" \
             --verify-tag \
             --generate-notes \
             --title "Hide N Seek: Ultimate ${VERSION}" \
