@@ -65,9 +65,11 @@ Python helper извлекает ровно одно определение `HNS
 `.github/workflows/release.yml` запускается только при push тега, похожего на `v*.*.*`; точную допустимость определяет helper. Workflow использует concurrency на полный ref и две стадии:
 
 1. `build` с `contents: read`: checkout полного tagged commit, проверка версии/тега, unit tests, `git diff-tree --check`, strict OpenSpec validation, загрузка и проверка toolchain, компиляция, упаковка и передача готовых файлов через Actions artifact.
-2. `publish` с `contents: write`, зависящий от успешного `build`: получение ровно этих файлов и `gh release create <tag> ... --verify-tag --generate-notes` с `GH_TOKEN`. Заголовок содержит `Hide N Seek: Ultimate <version>`; prerelease получает соответствующий флаг.
+2. `publish` с `contents: write`, зависящий от успешного `build`: получение ровно этих файлов и `gh release create <tag> ... --repo "$GITHUB_REPOSITORY" --verify-tag --generate-notes` с `GH_TOKEN`. Явный `--repo` обязателен, поскольку least-privilege publish job не выполняет checkout и не имеет локального `.git`. Заголовок содержит `Hide N Seek: Ultimate <version>`; prerelease получает соответствующий флаг.
 
 Используемые GitHub Actions закрепляются полным commit SHA с комментарием версии. Временные каталоги toolchain вычисляются внутри shell-step из стандартной переменной `$RUNNER_TEMP`: контекст `${{ runner.* }}` не используется в job-level `env`, где GitHub Actions его не разрешает. Workflow дополнительно проверяется `actionlint` до первого тега. `publish` не пересобирает плагин. Ошибка или отмена любой проверки не допускает запуск write-job. Обычный push ветки релиз не создаёт.
+
+Официальный `amxxpc` загружает соседний `amxxpc32.so` относительно текущего рабочего каталога. Поэтому compile-step SHALL сначала перейти в `$AMXX_SCRIPTING` и вызвать `./amxxpc`, сохраняя абсолютные пути только для исходника и результата. Запуск бинарника абсолютным путём из checkout-каталога завершается `compiler failed to instantiate` даже при корректно распакованном toolchain.
 
 Альтернативы:
 
@@ -117,7 +119,9 @@ Workflow устанавливает только 32-bit runtime-библиоте
 2. Ввести `version.inc`, подключить его к `hns.sma` и нормализовать версию до `1.0.0`.
 3. Удалить legacy `dhudmessage` include, реализовать helper, затем workflow и README; прогнать все локальные gates и официальную компиляцию.
 4. Синхронизировать `release-versioning` в основные OpenSpec specs и архивировать change.
-5. Отправить implementation commits в `master`, создать annotated tag `v1.0.0` на проверенном commit и отправить tag.
-6. Убедиться, что GitHub Release `v1.0.0` содержит три ожидаемых assets и что checksum/структура архива корректны.
+5. Отправить implementation commits в `master`, создать annotated tag, точно совпадающий с текущим `HNS_VERSION`, и отправить tag без последующего перемещения.
+6. Убедиться, что итоговый GitHub Release `v1.0.2` содержит три ожидаемых assets и что checksum/структура архива корректны.
 
-Rollback до первого тега выполняется обычным revert implementation commits. После опубликованного Release нельзя переиспользовать `v1.0.0`: исправление выпускается новой PATCH-версией; ошибочный Release можно пометить/удалить вручную, но существующий публичный тег не перемещается.
+Rollback до первого тега выполняется обычным revert implementation commits. После публикации любого тега его нельзя переиспользовать: исправление выпускается новой PATCH-версией; ошибочный Release можно пометить/удалить вручную, но существующий публичный тег не перемещается.
+
+Фактическая миграция сохранила это правило: `v1.0.0` выявил неверный рабочий каталог `amxxpc`, а `v1.0.1` — отсутствие repository context в checkout-free publish job. Оба публичных тега оставлены на исходных commit и не имеют Release. Исправленный pipeline успешно опубликовал первый стабильный Release `v1.0.2`; его tag dereference указывает на `670f40d`.

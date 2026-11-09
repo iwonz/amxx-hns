@@ -19,6 +19,8 @@
 - [x] 3.2 Сначала добавить падающий regression test отсутствия legacy `#include <dhudmessage>`, затем удалить этот include и добавить `.github/workflows/release.yml` с закреплёнными commit SHA официальных GitHub Actions, build/publish jobs, AMX Mod X 1.10.0.5487 compilation и условной prerelease-публикацией; проверить workflow-тесты и прогнать локально все команды build job, не выполняя `gh release create`.
 - [x] 3.3 Зафиксировать workflow и его regression tests отдельным атомарным commit; проверить область изменений через `git show --stat --oneline HEAD`.
 - [x] 3.4 Добавить падающий regression test, запрещающий `${{ runner.* }}` в job-level `env`; перенести временные пути toolchain в shell-step через `$RUNNER_TEMP`, проверить workflow `actionlint 1.7.7`, убедиться через GitHub API, что он распознан под именем `Release`, и зафиксировать исправление отдельным commit до создания тега.
+- [x] 3.5 По логу failed run `v1.0.0` добавить regression test рабочего каталога компилятора; запускать `./amxxpc` из `$AMXX_SCRIPTING`, локально воспроизвести GitHub-команду, повысить PATCH-версию до `1.0.1`, повторить все gates и подтвердить успешный build job неизменяемого тега `v1.0.1`, не перемещая опубликованный `v1.0.0`.
+- [x] 3.6 По логу publish job `v1.0.1` добавить regression test явного `--repo "$GITHUB_REPOSITORY"` для `gh release create` без checkout; повысить PATCH-версию до `1.0.2`, повторить gates и выпустить Release `v1.0.2`, не перемещая `v1.0.0` и `v1.0.1`.
 
 ## 4. Документация и интеграция
 
@@ -30,5 +32,5 @@
 ## Workflow follow-up
 
 - Синхронизировать delta `release-versioning` в основные specs, обновить ожидаемый capability inventory в documentation tests, повторить все gates и архивировать `add-semver-release-automation` отдельным commit.
-- Отправить implementation/archive commits в `origin/master`, создать annotated tag `v1.0.0` на проверенном commit и отправить только этот tag.
-- Дождаться успешного GitHub Actions run и проверить, что Release `v1.0.0` не является prerelease, указывает на правильный commit и содержит `hns-v1.0.0.zip`, `hns.amxx`, `SHA256SUMS` с валидными суммами.
+- Отправлены implementation commits в `origin/master`; опубликованные failed-теги `v1.0.0` и `v1.0.1` оставлены неизменными, исправленный annotated tag `v1.0.2` создан на проверенном commit `670f40d`.
+- GitHub Actions run `v1.0.2` завершён успешно; стабильный Release указывает на правильный commit и содержит `hns-v1.0.2.zip`, `hns.amxx`, `SHA256SUMS` с валидными суммами и полным deployable-архивом из 15 файлов.
