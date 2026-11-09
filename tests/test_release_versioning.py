@@ -322,6 +322,16 @@ class ReleaseVersioningTests(unittest.TestCase):
     self.assertIn('AMXX_DOWNLOAD_DIR="$RUNNER_TEMP/amxx-downloads"', workflow)
     self.assertIn('echo "AMXX_DIR=$AMXX_DIR" >> "$GITHUB_ENV"', workflow)
 
+  def test_release_workflow_runs_compiler_beside_its_shared_object(self):
+    workflow = read_release_workflow()
+
+    self.assertIn('cd "$AMXX_SCRIPTING"', workflow)
+    self.assertIn("./amxxpc", workflow)
+    self.assertLess(
+      workflow.index('cd "$AMXX_SCRIPTING"'),
+      workflow.index("./amxxpc"),
+    )
+
   def test_release_workflow_gates_build_before_transferring_artifacts(self):
     workflow = read_release_workflow()
 

@@ -76,9 +76,10 @@ jobs:
         shell: bash
         run: |
           AMXX_SCRIPTING="$AMXX_DIR/addons/amxmodx/scripting"
-          mkdir -p build
+          mkdir -p "$GITHUB_WORKSPACE/build"
           chmod +x "$AMXX_SCRIPTING/amxxpc"
-          "$AMXX_SCRIPTING/amxxpc" \
+          cd "$AMXX_SCRIPTING"
+          ./amxxpc \
             "$GITHUB_WORKSPACE/src/scripting/hns.sma" \
             -i"$AMXX_SCRIPTING/include" \
             -o"$GITHUB_WORKSPACE/build/hns.amxx"
