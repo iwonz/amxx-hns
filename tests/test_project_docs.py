@@ -32,6 +32,7 @@ class ProjectDocumentationTests(unittest.TestCase):
       "equipment-and-map-rules",
       "fall-damage-and-recovery",
       "flashbang-rules",
+      "release-versioning",
       "round-lifecycle",
       "team-and-player-flow",
     }
