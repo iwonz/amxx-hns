@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 
 import argparse
+import hashlib
 import re
+import shutil
 import sys
+import zipfile
+from dataclasses import dataclass
 from pathlib import Path
 
 
@@ -25,6 +29,13 @@ VERSION_DEFINE_PATTERN = re.compile(
 
 class ReleaseError(ValueError):
   pass
+
+
+@dataclass(frozen=True)
+class ReleaseArtifacts:
+  archive: Path
+  plugin: Path
+  checksums: Path
 
 
 def is_valid_semver(version: str) -> bool:
@@ -61,6 +72,119 @@ def read_version(version_source: Path = VERSION_SOURCE) -> str:
   return version
 
 
+def sha256_file(path: Path) -> str:
+  digest = hashlib.sha256()
+  with path.open("rb") as source:
+    for chunk in iter(lambda: source.read(1024 * 1024), b""):
+      digest.update(chunk)
+  return digest.hexdigest()
+
+
+def release_inputs(project_root: Path, plugin_path: Path) -> list[tuple[Path, str]]:
+  resources = [
+    (plugin_path, "addons/amxmodx/plugins/hns.amxx"),
+    (
+      project_root / "src" / "configs" / "hns.cfg",
+      "addons/amxmodx/configs/hns.cfg",
+    ),
+    (
+      project_root / "src" / "data" / "lang" / "hns.txt",
+      "addons/amxmodx/data/lang/hns.txt",
+    ),
+  ]
+
+  sound_root = project_root / "src" / "sound" / "hns"
+  if not sound_root.is_dir():
+    raise ReleaseError(f"Required sound directory is missing: {sound_root}")
+
+  sound_files = sorted(path for path in sound_root.rglob("*") if path.is_file())
+  if not sound_files:
+    raise ReleaseError(f"Required sound directory is empty: {sound_root}")
+
+  resources.extend(
+    (
+      path,
+      f"sound/{path.relative_to(project_root / 'src' / 'sound').as_posix()}",
+    )
+    for path in sound_files
+  )
+
+  for source, _archive_path in resources:
+    if not source.is_file():
+      raise ReleaseError(f"Required release file is missing: {source}")
+
+  return resources
+
+
+def verify_archive(
+  archive_path: Path,
+  resources: list[tuple[Path, str]],
+) -> None:
+  expected_names = [archive_name for _source, archive_name in resources]
+  try:
+    with zipfile.ZipFile(archive_path) as archive:
+      if archive.namelist() != expected_names:
+        raise ReleaseError(
+          f"Release archive file list does not match allowlist: {archive_path}"
+        )
+
+      for source, archive_name in resources:
+        if archive.read(archive_name) != source.read_bytes():
+          raise ReleaseError(
+            f"Release archive content differs from source: {archive_name}"
+          )
+  except (OSError, zipfile.BadZipFile) as error:
+    raise ReleaseError(f"Cannot verify release archive {archive_path}: {error}") from error
+
+
+def package_release(
+  plugin_path: Path,
+  output_dir: Path,
+  *,
+  project_root: Path = ROOT,
+) -> ReleaseArtifacts:
+  project_root = project_root.resolve()
+  plugin_path = plugin_path.resolve()
+  output_dir = output_dir.absolute()
+  version_source = project_root / "src" / "scripting" / "hns" / "version.inc"
+  version = read_version(version_source)
+  resources = release_inputs(project_root, plugin_path)
+
+  archive_path = output_dir / f"hns-v{version}.zip"
+  standalone_path = output_dir / "hns.amxx"
+  checksums_path = output_dir / "SHA256SUMS"
+
+  try:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(
+      archive_path,
+      mode="w",
+      compression=zipfile.ZIP_DEFLATED,
+      compresslevel=9,
+    ) as archive:
+      for source, archive_name in resources:
+        archive.writestr(archive_name, source.read_bytes())
+
+    verify_archive(archive_path, resources)
+    shutil.copyfile(plugin_path, standalone_path)
+
+    checksums = (
+      f"{sha256_file(archive_path)}  {archive_path.name}\n"
+      f"{sha256_file(standalone_path)}  {standalone_path.name}\n"
+    )
+    checksums_path.write_text(checksums, encoding="ascii", newline="\n")
+  except ReleaseError:
+    raise
+  except (OSError, zipfile.BadZipFile) as error:
+    raise ReleaseError(f"Cannot build release package: {error}") from error
+
+  return ReleaseArtifacts(
+    archive=archive_path,
+    plugin=standalone_path,
+    checksums=checksums_path,
+  )
+
+
 def command_version(_args: argparse.Namespace) -> int:
   print(read_version())
   return 0
@@ -76,6 +200,14 @@ def command_verify_tag(args: argparse.Namespace) -> int:
   print(f"version={version}")
   print(f"tag={args.tag}")
   print(f"prerelease={'true' if is_prerelease(version) else 'false'}")
+  return 0
+
+
+def command_package(args: argparse.Namespace) -> int:
+  artifacts = package_release(args.plugin, args.output_dir)
+  print(artifacts.archive)
+  print(artifacts.plugin)
+  print(artifacts.checksums)
   return 0
 
 
@@ -97,6 +229,24 @@ def build_parser() -> argparse.ArgumentParser:
   )
   tag_parser.add_argument("--tag", required=True, help="Git tag to verify")
   tag_parser.set_defaults(handler=command_verify_tag)
+
+  package_parser = subparsers.add_parser(
+    "package",
+    help="Build installable release assets from a compiled hns.amxx.",
+  )
+  package_parser.add_argument(
+    "--plugin",
+    required=True,
+    type=Path,
+    help="Path to the freshly compiled hns.amxx",
+  )
+  package_parser.add_argument(
+    "--output-dir",
+    required=True,
+    type=Path,
+    help="Directory for release assets",
+  )
+  package_parser.set_defaults(handler=command_package)
 
   return parser
 

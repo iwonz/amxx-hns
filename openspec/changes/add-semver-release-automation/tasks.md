@@ -9,9 +9,9 @@
 
 ## 2. Проверяемая релизная упаковка
 
-- [ ] 2.1 До реализации добавить падающие тесты упаковки с временным `.amxx`: точные пути ZIP, побайтовое сохранение `hns.cfg`/`hns.txt`/звуков, имя `hns-v<SemVer>.zip`, отдельный `hns.amxx`, корректный `SHA256SUMS` и отказ при отсутствии обязательного ресурса; подтвердить целевое падение `python3 -B -m unittest tests.test_release_versioning -v`.
-- [ ] 2.2 Реализовать команду `python3 scripts/release.py package --plugin build/hns.amxx --output-dir build/release` с явным allowlist deployable-файлов и итоговой самопроверкой архива; убедиться, что тесты проходят и `unzip -l build/release/hns-v1.0.0.zip` показывает требуемую структуру относительно `cstrike`.
-- [ ] 2.3 Зафиксировать упаковщик и его тесты отдельным атомарным commit; проверить область изменений через `git show --stat --oneline HEAD`.
+- [x] 2.1 До реализации добавить падающие тесты упаковки с временным `.amxx`: точные пути ZIP, побайтовое сохранение `hns.cfg`/`hns.txt`/звуков, имя `hns-v<SemVer>.zip`, отдельный `hns.amxx`, корректный `SHA256SUMS` и отказ при отсутствии обязательного ресурса; подтвердить целевое падение `python3 -B -m unittest tests.test_release_versioning -v`.
+- [x] 2.2 Реализовать команду `python3 scripts/release.py package --plugin build/hns.amxx --output-dir build/release` с явным allowlist deployable-файлов и итоговой самопроверкой архива; убедиться, что тесты проходят и `unzip -l build/release/hns-v1.0.0.zip` показывает требуемую структуру относительно `cstrike`.
+- [x] 2.3 Зафиксировать упаковщик и его тесты отдельным атомарным commit; проверить область изменений через `git show --stat --oneline HEAD`.
 
 ## 3. GitHub Release automation
 
