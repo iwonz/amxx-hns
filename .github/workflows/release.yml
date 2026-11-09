@@ -19,8 +19,6 @@ jobs:
       version: ${{ steps.release-meta.outputs.version }}
       prerelease: ${{ steps.release-meta.outputs.prerelease }}
     env:
-      AMXX_DIR: ${{ runner.temp }}/amxx-1.10.0.5487
-      AMXX_DOWNLOAD_DIR: ${{ runner.temp }}/amxx-downloads
       AMXX_BASE_ARCHIVE: amxmodx-1.10.0-git5487-base-linux.tar.gz
       AMXX_CSTRIKE_ARCHIVE: amxmodx-1.10.0-git5487-cstrike-linux.tar.gz
       AMXX_RELEASE_URL: https://github.com/alliedmodders/amxmodx/releases/download/1.10.0.5487/
@@ -57,6 +55,9 @@ jobs:
       - name: Download verified AMX Mod X toolchain
         shell: bash
         run: |
+          AMXX_DIR="$RUNNER_TEMP/amxx-1.10.0.5487"
+          AMXX_DOWNLOAD_DIR="$RUNNER_TEMP/amxx-downloads"
+          echo "AMXX_DIR=$AMXX_DIR" >> "$GITHUB_ENV"
           mkdir -p "$AMXX_DIR" "$AMXX_DOWNLOAD_DIR"
           curl --fail --location --retry 3 --retry-all-errors \
             --output "$AMXX_DOWNLOAD_DIR/$AMXX_BASE_ARCHIVE" \

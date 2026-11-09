@@ -314,6 +314,14 @@ class ReleaseVersioningTests(unittest.TestCase):
     ):
       self.assertIn(toolchain_contract, workflow)
 
+  def test_release_workflow_resolves_runner_temp_inside_a_step(self):
+    workflow = read_release_workflow()
+
+    self.assertNotIn("${{ runner.", workflow)
+    self.assertIn('AMXX_DIR="$RUNNER_TEMP/amxx-1.10.0.5487"', workflow)
+    self.assertIn('AMXX_DOWNLOAD_DIR="$RUNNER_TEMP/amxx-downloads"', workflow)
+    self.assertIn('echo "AMXX_DIR=$AMXX_DIR" >> "$GITHUB_ENV"', workflow)
+
   def test_release_workflow_gates_build_before_transferring_artifacts(self):
     workflow = read_release_workflow()
 
