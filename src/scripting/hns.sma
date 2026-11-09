@@ -18,18 +18,12 @@
 
 new const FLASHBANG_MODEL[] = "models/w_flashbang.mdl";
 
-new bool:g_bStart = false;
-new bool:g_bCountdownActive = false;
-
 new g_iFlasher;
 new g_iFlasherTeam;
 new bool:g_bFlashFailed;
 new bool:g_bFlashbangEntity[MAX_TRACKED_ENTITIES];
 
-new g_iTimer = 0;
-
-new g_TimerEntity;
-
+#include "hns/countdown.inc"
 #include "hns/team_flow.inc"
 #include "hns/round.inc"
 
@@ -170,58 +164,6 @@ public client_disconnect(id) {
 	g_aIsAfkTeam[id] = 0;
 }
 
-public fnToggleCountdownSound(id) {
-	if(get_pcvar_num(g_aCvar[CVAR_CD_SOUND]) == 0) {
-		ChatColorKey(id, "HNS_COUNTDOWN_SOUND_SERVER_DISABLED");
-		return PLUGIN_HANDLED;
-	}
-
-	if(g_aCountdownSound[id])
-		ChatColorKey(id, "HNS_COUNTDOWN_SOUND_DISABLED");
-	else
-		ChatColorKey(id, "HNS_COUNTDOWN_SOUND_ENABLED");
-
-	g_aCountdownSound[id] = !g_aCountdownSound[id];
-
-	return PLUGIN_HANDLED;
-}
-
-public fnDeath() {
-	// new iKiller = read_data(1);
-	new iVictim = read_data(2);
-
-	if(
-		get_pcvar_num(g_aCvar[CVAR_TIMER_IMMORTAL]) == 1 &&
-		g_bStart &&
-		g_iTimer > 0
-	) {
-		new Float:fReviveDelay;
-		fReviveDelay = get_pcvar_float(g_aCvar[CVAR_TIMER_IMMORTAL_DELAY]);
-
-		new iReviveTaskID = TASK_REVIVE + iVictim;
-
-		if(task_exists(iReviveTaskID))
-			remove_task(iReviveTaskID);
-
-		set_task(fReviveDelay, "fnRevive", iReviveTaskID);
-	}
-}
-
-public fnRevive(iTaskID) {
-	new iUserID = iTaskID - TASK_REVIVE;
-	new iUserTeam = get_user_team(iUserID);
-
-	if(
-		g_bConnected[iUserID] &&
-		g_bStart &&
-		g_iTimer > 0 &&
-		!is_user_alive(iUserID) &&
-		fnIsPlayableTeam(iUserTeam)
-	) {
-		ExecuteHamB(Ham_CS_RoundRespawn, iUserID);
-	}
-}
-
 fnRemoveRoundTasks(id) {
 	remove_task(TASK_AUTOHEAL + id);
 	remove_task(TASK_REVIVE + id);
@@ -232,26 +174,6 @@ fnRemoveRoundTasks(id) {
 fnRemovePlayerTasks(id) {
 	fnRemoveRoundTasks(id);
 	remove_task(TASK_FORCE_JOIN + id);
-}
-
-public fnRoundBeforeFreezeTime() {
-	new iTR, iCT;
-
-	fnStopCountdown();
-	fnGetPlayers(iTR, iCT);
-
-	g_bStart = iTR > 0 && iCT > 0;
-
-	g_iFlasher = g_iFlasherTeam = 0;
-	g_bFlashFailed = false;
-}
-
-public fnRoundAfterFreezeTime() {
-	if(g_bStart) {
-		g_iTimer = clamp(get_pcvar_num(g_aCvar[CVAR_TIMER]), 1, 10);
-		g_bCountdownActive = true;
-		set_pev(g_TimerEntity, pev_nextthink, get_gametime());
-	}
 }
 
 public fwdSetModel(ent, const szModel[]) {
@@ -325,75 +247,6 @@ fnNotifyFlashbangFailure(id) {
 		}
 		case 3:
 			client_cmd(id, "spk buttons/button10.wav");
-	}
-}
-
-public fnTimer(ent) {
-	new aPlayers[32], iPlayersCount, i;
-	get_players(aPlayers, iPlayersCount, "ch");
-
-	if(g_iTimer > 0) {
-		for(i = 0; i < iPlayersCount; i++) {
-			if(g_bConnected[aPlayers[i]] && !is_user_bot(aPlayers[i]) && !is_user_hltv(aPlayers[i])) {
-				if(get_user_team(aPlayers[i]) == 2) {
-					set_pev(aPlayers[i], pev_flags, pev(aPlayers[i], pev_flags) | FL_FROZEN);
-
-					if(get_pcvar_num(g_aCvar[CVAR_CT_TIMER_FADE_SCREEN]) == 1) {
-						fnMakeScreenFade(
-							aPlayers[i],
-							get_pcvar_num(g_aCvar[CVAR_CT_TIMER_FADE_SCREEN_R]),
-							get_pcvar_num(g_aCvar[CVAR_CT_TIMER_FADE_SCREEN_G]),
-							get_pcvar_num(g_aCvar[CVAR_CT_TIMER_FADE_SCREEN_B]),
-							get_pcvar_num(g_aCvar[CVAR_CT_TIMER_FADE_SCREEN_ALPHA]),
-							2
-						);
-					}
-				}
-
-				if(get_pcvar_num(g_aCvar[CVAR_CD_SOUND]) == 1 && g_aCountdownSound[aPlayers[i]])
-					client_cmd(aPlayers[i], "spk hns/countdown/%d.wav", g_iTimer);
-
-				ClearDHUDMessages(aPlayers[i]);
-				set_dhudmessage(255, 0, 0, -1.0, -0.65, 0, 0.0, 1.0, 0.1, 1.0);
-				show_dhudmessage(aPlayers[i], "%L", aPlayers[i], "HNS_COUNTDOWN", g_iTimer);
-			}
-		}
-
-		g_iTimer--;
-		set_pev(ent, pev_nextthink, get_gametime() + 1.0);
-	} else
-		fnEndCountdown(true);
-}
-
-fnStopCountdown() {
-	if(!g_bCountdownActive) {
-		set_pev(g_TimerEntity, pev_nextthink, 0.0);
-		return;
-	}
-
-	fnEndCountdown(false);
-}
-
-fnEndCountdown(bool:bShowStartMessage) {
-	g_iTimer = 0;
-	g_bCountdownActive = false;
-	set_pev(g_TimerEntity, pev_nextthink, 0.0);
-
-	new aPlayers[32], iPlayersCount;
-	get_players(aPlayers, iPlayersCount, "ch");
-
-	for(new i = 0; i < iPlayersCount; i++) {
-		ClearDHUDMessages(aPlayers[i]);
-
-		if(bShowStartMessage) {
-			set_dhudmessage(random_num(0, 255), random_num(0, 255), random_num(0, 255), -1.0, -0.65, 0, 0.0, 5.0, 0.1, 1.0);
-			show_dhudmessage(aPlayers[i], "%L", aPlayers[i], "HNS_ROUND_START");
-		}
-
-		if(get_user_team(aPlayers[i]) == 2) {
-			set_pev(aPlayers[i], pev_flags, pev(aPlayers[i], pev_flags) & ~FL_FROZEN);
-			fnMakeScreenFade(aPlayers[i], 0, 0, 0, 255, 0);
-		}
 	}
 }
 
