@@ -5,7 +5,7 @@ context: |
   All OpenSpec artifacts must be written in Russian.
   Keep OpenSpec structural headings and SHALL/MUST keywords in English.
 
-  Project: Hide N Seek: Ultimate, a Counter-Strike 1.6 game-mode core implemented as one AMX Mod X Pawn plugin.
+  Project: Hide And Seek: Ultimate, a Counter-Strike 1.6 game-mode core implemented as one AMX Mod X Pawn plugin.
   Target and verified toolchain: AMX Mod X 1.10.
   Main source: src/scripting/hns.sma.
   Shipped configuration: src/configs/hns.cfg in CP1251.

@@ -213,7 +213,7 @@ def command_package(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
   parser = argparse.ArgumentParser(
-    description="Validate and package Hide N Seek: Ultimate releases."
+    description="Validate and package Hide And Seek: Ultimate releases."
   )
   subparsers = parser.add_subparsers(dest="command", required=True)
 

@@ -6,7 +6,7 @@
 
 #include "hns/version.inc"
 
-#define PLUGIN "Hide N Seek: Ultimate"
+#define PLUGIN "Hide And Seek: Ultimate"
 #define AUTHOR "foxmits"
 
 #include "hns/definitions.inc"

@@ -1,4 +1,4 @@
-# Hide N Seek: Ultimate
+# Hide And Seek: Ultimate
 
 Ядро режима Hide and Seek для Counter-Strike 1.6 на AMX Mod X. Террористы выступают прячущимися, Counter-Terrorists — ищущими: первым даётся время разбежаться и спрятаться, вторые после отсчёта должны найти и убить их.
 
@@ -46,7 +46,7 @@
 
 ### 1. Получите файлы плагина
 
-Рекомендуемый вариант — открыть [GitHub Releases](https://github.com/iwonz/amxx-hns/releases) и скачать из нужного стабильного выпуска три assets:
+Рекомендуемый вариант — открыть [GitHub Releases](https://github.com/iwonz/amxx-hns-ultimate/releases) и скачать из нужного стабильного выпуска три assets:
 
 - `hns-v<version>.zip` — готовая структура сервера;
 - `hns.amxx` — отдельный скомпилированный плагин;

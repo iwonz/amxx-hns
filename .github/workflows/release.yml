@@ -130,5 +130,5 @@ jobs:
             --repo "$GITHUB_REPOSITORY" \
             --verify-tag \
             --generate-notes \
-            --title "Hide N Seek: Ultimate ${VERSION}" \
+            --title "Hide And Seek: Ultimate ${VERSION}" \
             "${release_flags[@]}"

@@ -14,9 +14,43 @@ README = (ROOT / "README.md").read_text(encoding="utf-8")
 AGENTS = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
 SPEC_FILES = sorted((ROOT / "openspec" / "specs").glob("*/spec.md"))
 SPECS = "\n".join(path.read_text(encoding="utf-8") for path in SPEC_FILES)
+RELEASE_SCRIPT = (ROOT / "scripts" / "release.py").read_text(encoding="utf-8")
+RELEASE_WORKFLOW = (
+  ROOT / ".github" / "workflows" / "release.yml"
+).read_text(encoding="utf-8")
+OPENSPEC_CONFIG = (ROOT / "openspec" / "config.yaml").read_text(encoding="utf-8")
 
 
 class ProjectDocumentationTests(unittest.TestCase):
+  def test_canonical_project_identity(self):
+    canonical_name = "Hide And Seek: Ultimate"
+    legacy_name = "Hide N" + " Seek: Ultimate"
+
+    self.assertIn(f'#define PLUGIN "{canonical_name}"', SOURCE)
+    self.assertTrue(README.startswith(f"# {canonical_name}\n"))
+    self.assertIn(
+      f'description="Validate and package {canonical_name} releases."',
+      RELEASE_SCRIPT,
+    )
+    self.assertIn(f'--title "{canonical_name} ${{VERSION}}"', RELEASE_WORKFLOW)
+    self.assertIn(f"Project: {canonical_name},", OPENSPEC_CONFIG)
+
+    for surface in (
+      SOURCE,
+      README,
+      RELEASE_SCRIPT,
+      RELEASE_WORKFLOW,
+      OPENSPEC_CONFIG,
+    ):
+      self.assertNotIn(legacy_name, surface)
+
+    canonical_releases_url = (
+      "https://github.com/iwonz/amxx-hns-ultimate/releases"
+    )
+    legacy_releases_url = "https://github.com/iwonz/" + "amxx-hns/releases"
+    self.assertIn(canonical_releases_url, README)
+    self.assertNotIn(legacy_releases_url, README)
+
   def test_every_registered_cvar_is_documented_for_users_and_in_specs(self):
     cvars = set(re.findall(r'create_cvar\("([^"]+)"', SOURCE))
 
@@ -78,7 +112,7 @@ class ProjectDocumentationTests(unittest.TestCase):
 
   def test_readme_keeps_maintainer_workflows_out_of_operator_docs(self):
     for required_text in (
-      "https://github.com/iwonz/amxx-hns/releases",
+      "https://github.com/iwonz/amxx-hns-ultimate/releases",
       "SHA256SUMS",
       "sha256sum -c SHA256SUMS",
     ):
